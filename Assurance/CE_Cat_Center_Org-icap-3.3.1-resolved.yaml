@@ -1176,6 +1176,7 @@ components:
           type: array
           description: |
             Optional list of response sections to fetch. When omitted or empty, the API returns all supported sections.
+            * `metadata` - Meta data of the pcap file analysis.
             * `title` - a short natural language title for the detected issue.
             * `summary` - a natural language summary of the pcap (a few sentences).
             * `reasoning` - a step-by-step analysis of what happened in the pcap.
@@ -1185,6 +1186,7 @@ components:
           items:
             type: string
             enum:
+            - metadata
             - title
             - summary
             - reasoning
@@ -1336,6 +1338,8 @@ components:
     CaptureFileAnalysis:
       type: object
       properties:
+        metadata:
+          $ref: "#/components/schemas/IcapAnalysisMetadataSection"
         title:
           type: string
           description: Short natural language title for the analysis
@@ -1357,6 +1361,21 @@ components:
         suggestedActions:
           $ref: "#/components/schemas/IcapAnalysisSuggestedActionsSection"
       description: Packet capture analysis response item
+    IcapAnalysisMetadataSection:
+      type: object
+      properties:
+        pcapId:
+          type: string
+        createdDate:
+          type: string
+        captureReason:
+          type: string
+        byteSize:
+          type: integer
+        packetCount:
+          type: integer
+        durationMilliSeconds:
+          type: integer
     IcapAnalysisReasoningSection:
       type: object
       properties:
@@ -2188,6 +2207,12 @@ components:
       value:
         version: "1.0"
         response:
+          metadata:
+            pcapId: F0D8054CB360-360_80211_1781249943182823
+            createdDate: 2026-06-12T07:39:13Z
+            captureReason: AP_EVENT_STA_EAPOL_4WAY_TIMEOUT
+            byteSize: 1624
+            packetCount: 9
           title: DHCP timeout.
           summary: |-
             The client experienced a timeout during the authentication process despite having excellent signal strength and coverage conditions. The authentication frame required retransmission, indicating potential processing delays or intermittent communication issues at the AP level.
