@@ -305,7 +305,17 @@ paths:
         example: ui:client360
       responses:
         "200":
-          $ref: "#/components/responses/DownloadCaptureFileResponseModel"
+          description: PCAP file stream
+          headers:
+            Content-Disposition:
+              description: "Suggests the filename for the download.  Path parameter id less the icapType, e.g., `attachment; filename=\"f01898b0c989_80211_1792622398864137.pcap\"`"
+              schema:
+                type: string
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
         "400":
           $ref: "#/components/responses/400"
         "404":
@@ -883,7 +893,7 @@ components:
           example:
           - -101
           - -94.5
-          - -87.0
+          - -87
           items:
             type: number
             description: signal amplitude
@@ -1373,8 +1383,6 @@ components:
         byteSize:
           type: integer
         packetCount:
-          type: integer
-        durationMilliSeconds:
           type: integer
     IcapAnalysisReasoningSection:
       type: object
@@ -2242,7 +2250,7 @@ components:
             jsonResults: "{\"frameExplanations\":[{\"firstFrame\":1,\"lastFrame\":1,\"frameType\":\"Authentication\",\"explanation\":\"The client is retransmitting an authentication frame to the AP with good signal strength (-44 dBm) and signal-to-noise ratio (39 dB). The retry flag indicates this is not the first attempt, suggesting the initial authentication request may not have been acknowledged by the AP. While the frame shows a successful status code, the need for retransmission combined with the reported password issue suggests there may be authentication credential problems preventing successful connection establishment.\"}],\"summary\":\"Client authentication retry with good signal strength, indicating potential password-related connectivity issue.\"}"
           flow:
           - frameNumber: 1
-            timestamp: 0.0
+            timestamp: 0
             title: Authentication
             description: Management Frame => Dot11EltVendorSpecific
             direction: RX
