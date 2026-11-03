@@ -1,4 +1,3 @@
----
 openapi: 3.0.0
 info:
   title: Assurance Network Device Interfaces List with statistics data
@@ -159,7 +158,7 @@ paths:
         style: form
         explode: false
         schema:
-          $ref: '#/components/schemas/InterfacesViews'
+          $ref: "#/components/schemas/InterfacesViews"
       - name: attribute
         in: query
         description: |
@@ -244,35 +243,23 @@ paths:
             type: string
       responses:
         "200":
-          description: Interfaces Response model on success
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/InterfacesResponse'
+          $ref: "#/components/responses/InterfacesResponse"
         "400":
-          description: "The client made a request that the server could not understand (for example, the request syntax is incorrect)."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: "#/components/responses/400"
         "500":
-          description: The server could not fulfill the request due to internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: "#/components/responses/500"
         "1XX":
-          description: Informational Responses - The server received the request and sent an informational response.
+          $ref: "#/components/responses/1XX"
         "2XX":
-          description: "Successful Responses - The server received the client request, understood it, and accepted it."
+          $ref: "#/components/responses/2XX"
         "3XX":
-          description: Redirection Messages - The client must take additional action to complete the request.
+          $ref: "#/components/responses/3XX"
         "4XX":
-          description: Client Error Responses - The client request caused the error.
+          $ref: "#/components/responses/4XX"
         "5XX":
-          description: Server Error Responses - The server failed to fulfill the request.
+          $ref: "#/components/responses/5XX"
         default:
-          description: Unexpected Error
+          $ref: "#/components/responses/defaultError"
   /dna/data/api/v1/interfaces/{id}:
     get:
       tags:
@@ -285,8 +272,6 @@ paths:
         in: path
         description: The interface Uuid
         required: true
-        style: simple
-        explode: false
         schema:
           type: string
       - name: startTime
@@ -313,7 +298,7 @@ paths:
         style: form
         explode: false
         schema:
-          $ref: '#/components/schemas/InterfacesViews'
+          $ref: "#/components/schemas/InterfacesViews"
       - name: attribute
         in: query
         description: |
@@ -337,40 +322,28 @@ paths:
             type: string
       responses:
         "200":
-          description: Interfaces Response model on success
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/InterfaceResponse'
+          $ref: "#/components/responses/InterfaceResponse"
         "400":
-          description: "The client made a request that the server could not understand (for example, the request syntax is incorrect)."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: "#/components/responses/400"
         "500":
-          description: The server could not fulfill the request due to internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: "#/components/responses/500"
         "1XX":
-          description: Informational Responses - The server received the request and sent an informational response.
+          $ref: "#/components/responses/1XX"
         "2XX":
-          description: "Successful Responses - The server received the client request, understood it, and accepted it."
+          $ref: "#/components/responses/2XX"
         "3XX":
-          description: Redirection Messages - The client must take additional action to complete the request.
+          $ref: "#/components/responses/3XX"
         "4XX":
-          description: Client Error Responses - The client request caused the error.
+          $ref: "#/components/responses/4XX"
         "5XX":
-          description: Server Error Responses - The server failed to fulfill the request.
+          $ref: "#/components/responses/5XX"
         default:
-          description: Unexpected Error
+          $ref: "#/components/responses/defaultError"
   /dna/data/api/v1/interfaces/count:
     get:
       tags:
       - interfaceList
-      summary: Gets the total Network device interface counts in the specified time range. When there is no start and end time specified returns the latest interfaces total count.
+      summary: "Gets the total Network device interface counts in the specified time range. When there is no start and end time specified returns the latest interfaces total count. When counting over 40,000 matching interfaces, values may be approximate."
       description: "Gets the total Network device interface counts. When counting over 40,000 matching interfaces, values may be approximate. Please apply additional filters to narrow results."
       operationId: readInterfacesCount
       parameters:
@@ -528,35 +501,23 @@ paths:
             type: string
       responses:
         "200":
-          description: Reponse object containing total count of the records after applying requested filters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CountIntegerResponse'
+          $ref: "#/components/responses/CountIntegerResponse"
         "400":
-          description: "The client made a request that the server could not understand (for example, the request syntax is incorrect)."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: "#/components/responses/400"
         "500":
-          description: The server could not fulfill the request due to internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: "#/components/responses/500"
         "1XX":
-          description: Informational Responses - The server received the request and sent an informational response.
+          $ref: "#/components/responses/1XX"
         "2XX":
-          description: "Successful Responses - The server received the client request, understood it, and accepted it."
+          $ref: "#/components/responses/2XX"
         "3XX":
-          description: Redirection Messages - The client must take additional action to complete the request.
+          $ref: "#/components/responses/3XX"
         "4XX":
-          description: Client Error Responses - The client request caused the error.
+          $ref: "#/components/responses/4XX"
         "5XX":
-          description: Server Error Responses - The server failed to fulfill the request.
+          $ref: "#/components/responses/5XX"
         default:
-          description: Unexpected Error
+          $ref: "#/components/responses/defaultError"
   /dna/data/api/v1/interfaces/query:
     post:
       tags:
@@ -569,39 +530,27 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InterfacesQueryRequest'
+              $ref: "#/components/schemas/InterfacesQueryRequest"
         required: true
       responses:
         "200":
-          description: Interfaces Query Response model on success
-          content:
-            '*/*':
-              schema:
-                $ref: '#/components/schemas/InterfacesQueryResponse'
+          $ref: "#/components/responses/InterfacesQueryResponse"
         "400":
-          description: "The client made a request that the server could not understand (for example, the request syntax is incorrect)."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: "#/components/responses/400"
         "500":
-          description: The server could not fulfill the request due to internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: "#/components/responses/500"
         "1XX":
-          description: Informational Responses - The server received the request and sent an informational response.
+          $ref: "#/components/responses/1XX"
         "2XX":
-          description: "Successful Responses - The server received the client request, understood it, and accepted it."
+          $ref: "#/components/responses/2XX"
         "3XX":
-          description: Redirection Messages - The client must take additional action to complete the request.
+          $ref: "#/components/responses/3XX"
         "4XX":
-          description: Client Error Responses - The client request caused the error.
+          $ref: "#/components/responses/4XX"
         "5XX":
-          description: Server Error Responses - The server failed to fulfill the request.
+          $ref: "#/components/responses/5XX"
         default:
-          description: Unexpected Error
+          $ref: "#/components/responses/defaultError"
   /dna/data/api/v1/interfaces/query/count:
     post:
       tags:
@@ -614,42 +563,30 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InterfacesQueryRequest'
+              $ref: "#/components/schemas/InterfacesQueryRequest"
             examples:
               InterfaceQueryCountExample:
-                $ref: '#/components/examples/InterfaceQueryCountExample'
+                $ref: "#/components/examples/InterfaceQueryCountExample"
         required: true
       responses:
         "200":
-          description: Reponse object containing total count of the records after applying requested filters
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CountIntegerResponse'
+          $ref: "#/components/responses/CountIntegerResponse"
         "400":
-          description: "The client made a request that the server could not understand (for example, the request syntax is incorrect)."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: "#/components/responses/400"
         "500":
-          description: The server could not fulfill the request due to internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: "#/components/responses/500"
         "1XX":
-          description: Informational Responses - The server received the request and sent an informational response.
+          $ref: "#/components/responses/1XX"
         "2XX":
-          description: "Successful Responses - The server received the client request, understood it, and accepted it."
+          $ref: "#/components/responses/2XX"
         "3XX":
-          description: Redirection Messages - The client must take additional action to complete the request.
+          $ref: "#/components/responses/3XX"
         "4XX":
-          description: Client Error Responses - The client request caused the error.
+          $ref: "#/components/responses/4XX"
         "5XX":
-          description: Server Error Responses - The server failed to fulfill the request.
+          $ref: "#/components/responses/5XX"
         default:
-          description: Unexpected Error
+          $ref: "#/components/responses/defaultError"
   /dna/data/api/v1/interfaces/{id}/trendAnalytics:
     post:
       tags:
@@ -662,8 +599,6 @@ paths:
         in: path
         description: The interface instance Uuid
         required: true
-        style: simple
-        explode: false
         schema:
           type: string
           format: uuid
@@ -672,49 +607,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InterfaceTrendRequest'
+              $ref: "#/components/schemas/InterfaceTrendRequest"
             examples:
               TrendRequestPdClassExample:
-                $ref: '#/components/examples/TrendRequestPdClassExample'
+                $ref: "#/components/examples/TrendRequestPdClassExample"
               WithoutGroupByRequestExample:
-                $ref: '#/components/examples/TrendRequestPowerBudgetExample'
+                $ref: "#/components/examples/TrendRequestPowerBudgetExample"
         required: true
       responses:
         "200":
-          description: Interfaces Query Response model on success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/InterfaceTrendResponseList'
-              examples:
-                TrendRequestPdClassExample:
-                  $ref: '#/components/examples/TrendResponsePdClassExample'
-                WithoutGroupByRequestExample:
-                  $ref: '#/components/examples/TrendResponsePowerBudgetExample'
+          $ref: "#/components/responses/InterfaceTrendResponse"
         "400":
-          description: "The client made a request that the server could not understand (for example, the request syntax is incorrect)."
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: "#/components/responses/400"
         "500":
-          description: The server could not fulfill the request due to internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: "#/components/responses/500"
         "1XX":
-          description: Informational Responses - The server received the request and sent an informational response.
+          $ref: "#/components/responses/1XX"
         "2XX":
-          description: "Successful Responses - The server received the client request, understood it, and accepted it."
+          $ref: "#/components/responses/2XX"
         "3XX":
-          description: Redirection Messages - The client must take additional action to complete the request.
+          $ref: "#/components/responses/3XX"
         "4XX":
-          description: Client Error Responses - The client request caused the error.
+          $ref: "#/components/responses/4XX"
         "5XX":
-          description: Server Error Responses - The server failed to fulfill the request.
+          $ref: "#/components/responses/5XX"
         default:
-          description: Unexpected Error
+          $ref: "#/components/responses/defaultError"
 components:
   schemas:
     InterfaceTrendRequest:
@@ -732,13 +650,13 @@ components:
         attributes:
           type: array
           items:
-            $ref: '#/components/schemas/InterfacesTrendAttributes'
+            $ref: "#/components/schemas/InterfacesTrendAttributes"
         filters:
-          $ref: '#/components/schemas/InterfacesAnalyticsFilters'
+          $ref: "#/components/schemas/InterfacesAnalyticsFilters"
         aggregateAttributes:
           type: array
           items:
-            $ref: '#/components/schemas/InterfacesTrendAggregateAttributes'
+            $ref: "#/components/schemas/InterfacesTrendAggregateAttributes"
         timestampOrder:
           type: string
           description: The sort order of the timestamp can be either ascending or descending
@@ -747,7 +665,7 @@ components:
           - desc
       description: The input payload schema to query the Trend Analytics Interface data.
       allOf:
-      - $ref: '#/components/schemas/startAndEndTime'
+      - $ref: "#/components/schemas/startAndEndTime"
     InterfacesTrendAttributes:
       type: string
       description: |-
@@ -818,16 +736,16 @@ components:
       items:
         type: object
         allOf:
-        - $ref: '#/components/schemas/InterfacesAnalyticsFilter'
+        - $ref: "#/components/schemas/InterfacesAnalyticsFilter"
     InterfacesAnalyticsFilter:
       type: object
       properties:
         key:
-          $ref: '#/components/schemas/InterfacesTrendAttributes'
+          $ref: "#/components/schemas/InterfacesTrendAttributes"
         operator:
-          $ref: '#/components/schemas/Operator'
+          $ref: "#/components/schemas/Operator"
         logicalOperator:
-          $ref: '#/components/schemas/LogicalOperator'
+          $ref: "#/components/schemas/LogicalOperator"
         value:
           type: object
           description: |
@@ -843,16 +761,16 @@ components:
 
             Structure of nested filter is the same as parent with all operators   supported except AND or OR.
           items:
-            $ref: '#/components/schemas/InterfacesAnalyticsFilter'
+            $ref: "#/components/schemas/InterfacesAnalyticsFilter"
       description: |
         In case of single filter, please use `key`, `operator` and `value` combination. If multiple filters need to be applied using a logical   operation, please use `logicalOperator` and populate the list of 'filters' with a   combination of FilterObj. Filters can be nested to build complex   queries.
     InterfacesTrendAggregateAttributes:
       type: object
       properties:
         name:
-          $ref: '#/components/schemas/InterfacesTrendAggregateName'
+          $ref: "#/components/schemas/InterfacesTrendAggregateName"
         function:
-          $ref: '#/components/schemas/Function'
+          $ref: "#/components/schemas/Function"
     InterfacesTrendAggregateName:
       type: string
       description: "Field name on which the aggregate function should be applied when querying the data. The supported field details are available in the enum definition. The following are the supported functions for each field \n\n  | Field | Functions Supported |\n  | --- | --- |\n  | `pdPowerBudgetInWatt` | min,max,avg,latest,sum |\n  | `pdPowerConsumed` | min,max,avg,latest,sum |\n  | `pdPowerConsumedPercent` | min,max,avg,latest |\n  | `pdPowerRemaining` | min,max,avg,latest,sum |\n  | `pdPowerAdminMaxInWatt` | min,max,avg,latest,sum |\n  | `interfacePowerMax` | min,max,avg,latest,sum |\n  | `rxDiscards` | min,max,avg,latest,sum |\n  | `rxError` | min,max,avg,latest,sum |\n  | `rxRate` | min,max,avg,latest,sum |\n  | `rxUtilization` | min,max,avg,latest,sum |\n  | `txDiscards` | min,max,avg,latest,sum |\n  | `txError` | min,max,avg,latest,sum |\n  | `txRate` | min,max,avg,latest,sum |\n  | `txUtilization` | min,max,avg,latest,sum |"
@@ -889,7 +807,7 @@ components:
         response:
           type: array
           items:
-            $ref: '#/components/schemas/InterfaceTrendResponse'
+            $ref: "#/components/schemas/InterfaceTrendResponse"
         timestampOrder:
           type: string
           description: The sort order of the timestamp can be either ascending or descending
@@ -904,27 +822,27 @@ components:
           format: int64
           example: 1714771500000
         attributes:
-          $ref: '#/components/schemas/InterfaceTrendAttributesResponse'
+          $ref: "#/components/schemas/InterfaceTrendAttributesResponse"
         aggregateAttributes:
-          $ref: '#/components/schemas/InterfaceTrendAggregatesResponse'
+          $ref: "#/components/schemas/InterfaceTrendAggregatesResponse"
     InterfaceTrendAttributesResponse:
       type: array
       example:
       - name: poeOperStatus
         value: POWER_STATE_ON
       items:
-        $ref: '#/components/schemas/InterfaceTrendAttributesResponse_inner'
+        $ref: "#/components/schemas/InterfaceTrendAttributesResponse_inner"
     InterfaceTrendAggregatesResponse:
       type: array
       items:
-        $ref: '#/components/schemas/InterfaceTrendAggregateResponse'
+        $ref: "#/components/schemas/InterfaceTrendAggregateResponse"
     InterfaceTrendAggregateResponse:
       type: object
       properties:
         name:
-          $ref: '#/components/schemas/InterfacesTrendAggregateName'
+          $ref: "#/components/schemas/InterfacesTrendAggregateName"
         function:
-          $ref: '#/components/schemas/Function'
+          $ref: "#/components/schemas/Function"
         value:
           type: number
           description: The value for the attribute field in the given time rang
@@ -954,7 +872,7 @@ components:
           type: array
           description: Reference to the sortBy that was applied in the Pagination Request.
           items:
-            $ref: '#/components/schemas/PaginationResponse_sortBy'
+            $ref: "#/components/schemas/PaginationResponse_sortBy"
     InterfaceSummaryAnalyticsGroupResponse:
       type: object
       properties:
@@ -964,7 +882,7 @@ components:
         group:
           type: array
           items:
-            $ref: '#/components/schemas/InterfaceSummaryAnalyticsGroupResponse_group'
+            $ref: "#/components/schemas/InterfaceSummaryAnalyticsGroupResponse_group"
     InterfaceData:
       type: object
       properties:
@@ -1149,9 +1067,9 @@ components:
           format: mac
           example: AA:BB:CC:DD:EE:FF
         siteHierarchy:
-          $ref: '#/components/schemas/siteHierarchy'
+          $ref: "#/components/schemas/siteHierarchy"
         siteHierarchyId:
-          $ref: '#/components/schemas/siteHierarchyId'
+          $ref: "#/components/schemas/siteHierarchyId"
         poeAdminStatus:
           type: string
           description: Interface PoE Admin status
@@ -1321,11 +1239,11 @@ components:
       type: object
       properties:
         aggregateAttributes:
-          $ref: '#/components/schemas/InterfaceResponseAggregateAttributes'
+          $ref: "#/components/schemas/InterfaceResponseAggregateAttributes"
       description: |
         Interface data with Aggregated value based on the data provided in the input payload.
       allOf:
-      - $ref: '#/components/schemas/InterfaceData'
+      - $ref: "#/components/schemas/InterfaceData"
     InterfacesViews:
       type: string
       description: "Views which are supported by this API. Each view represents a specific data set.\n\n### Response data provided by each view:  \n\n1. **configuration**\n[id,name,adminStatus,description,duplexConfig,duplexOper,interfaceIfIndex,interfaceType,ipv4Address,ipv6AddressList,isL3Interface,isWan,macAddress,mediaType,name,operStatus, portChannelId,portMode, portType,speed,timestamp,vlanId,networkDeviceId,networkDeviceIpAddress,networkDeviceMacAddress,siteName,siteHierarchy,siteHierarchyId]  \n\n2. **statistics**\n[id,name,rxDiscards,rxError,rxRate,rxUtilization,txDiscards,txError,txRate,txUtilization,networkDeviceId,networkDeviceIpAddress,networkDeviceMacAddress,siteName,siteHierarchy,siteHierarchyId]  \n3. **stackPort**\n[id,name,peerStackMember,peerStackPort,stackPortType,networkDeviceId,networkDeviceIpAddress,networkDeviceMacAddress,siteName,siteHierarchy,siteHierarchyId] \n4. **poE**  \n[id, name,rxDiscards,rxError,rxRate,rxUtilization,txDiscards,txError,txRate,txUtilization,networkDeviceId,networkDeviceIpAddress,networkDeviceMacAddress,siteName,siteHierarchy,siteHierarchyId]  \n\n\nWhen this query parameter is not added by default all configuration attributes will be available in the response.\n\n**[configuration,statistics,stackPort]**\n"
@@ -1406,16 +1324,16 @@ components:
     InterfacesFilters:
       type: array
       items:
-        $ref: '#/components/schemas/InterfacesFilter'
+        $ref: "#/components/schemas/InterfacesFilter"
     InterfacesFilter:
       type: object
       properties:
         key:
-          $ref: '#/components/schemas/InterfacesAttributes'
+          $ref: "#/components/schemas/InterfacesAttributes"
         operator:
-          $ref: '#/components/schemas/Operator'
+          $ref: "#/components/schemas/Operator"
         logicalOperator:
-          $ref: '#/components/schemas/LogicalOperator'
+          $ref: "#/components/schemas/LogicalOperator"
         value:
           type: object
           description: |
@@ -1431,7 +1349,7 @@ components:
 
             Structure of nested filter is the same as parent with all operators   supported except AND or OR.
           items:
-            $ref: '#/components/schemas/InterfacesFilter'
+            $ref: "#/components/schemas/InterfacesFilter"
       description: |
         In case of single filter, please use `key`, `operator` and `value` combination. If multiple filters need to be applied using a logical   operation, please use `logicalOperator` and populate the list of 'filters' with a   combination of FilterObj. Filters can be nested to build complex   queries.
     InterfacesQueryRequest:
@@ -1440,19 +1358,19 @@ components:
         views:
           type: array
           items:
-            $ref: '#/components/schemas/InterfacesViews'
+            $ref: "#/components/schemas/InterfacesViews"
         attributes:
           type: array
           items:
-            $ref: '#/components/schemas/InterfacesAttributes'
+            $ref: "#/components/schemas/InterfacesAttributes"
         filters:
-          $ref: '#/components/schemas/InterfacesFilters'
+          $ref: "#/components/schemas/InterfacesFilters"
         aggregateAttributes:
-          $ref: '#/components/schemas/InterfaceAggregateAttributes'
+          $ref: "#/components/schemas/InterfaceAggregateAttributes"
         page:
-          $ref: '#/components/schemas/Pagination'
+          $ref: "#/components/schemas/Pagination"
       allOf:
-      - $ref: '#/components/schemas/startAndEndTime'
+      - $ref: "#/components/schemas/startAndEndTime"
     InterfacesResponse:
       type: object
       properties:
@@ -1460,9 +1378,9 @@ components:
           type: array
           description: Successfully returned list of Interfaces
           items:
-            $ref: '#/components/schemas/InterfaceData'
+            $ref: "#/components/schemas/InterfaceData"
         page:
-          $ref: '#/components/schemas/PaginationResponse'
+          $ref: "#/components/schemas/PaginationResponse"
         version:
           type: string
           example: "1.0"
@@ -1473,7 +1391,7 @@ components:
         response:
           type: object
           allOf:
-          - $ref: '#/components/schemas/InterfaceData'
+          - $ref: "#/components/schemas/InterfaceData"
         version:
           type: string
           example: "1.0"
@@ -1484,27 +1402,27 @@ components:
         response:
           type: array
           items:
-            $ref: '#/components/schemas/InterfaceWithAggregateResponse'
+            $ref: "#/components/schemas/InterfaceWithAggregateResponse"
         page:
-          $ref: '#/components/schemas/PaginationResponse'
+          $ref: "#/components/schemas/PaginationResponse"
         version:
           type: string
           example: "1.0"
     InterfaceAggregateAttributes:
       type: array
       items:
-        $ref: '#/components/schemas/InterfaceAggregateAttribute'
+        $ref: "#/components/schemas/InterfaceAggregateAttribute"
     InterfaceResponseAggregateAttributes:
       type: array
       items:
-        $ref: '#/components/schemas/InterfaceResponseAggregateAttribute'
+        $ref: "#/components/schemas/InterfaceResponseAggregateAttribute"
     InterfaceResponseAggregateAttribute:
       type: object
       properties:
         name:
-          $ref: '#/components/schemas/InterfaceAnalyticsAggregateName'
+          $ref: "#/components/schemas/InterfaceAnalyticsAggregateName"
       allOf:
-      - $ref: '#/components/schemas/AggregateResponseAttributes'
+      - $ref: "#/components/schemas/AggregateResponseAttributes"
     InterfaceAnalyticsAggregateName:
       type: string
       description: |-
@@ -1535,14 +1453,14 @@ components:
           type: array
           description: List of values based on the functions requested in the input data
           items:
-            $ref: '#/components/schemas/AggregateResponseAttributes_values'
+            $ref: "#/components/schemas/AggregateResponseAttributes_values"
     InterfaceAggregateAttribute:
       type: object
       properties:
         name:
-          $ref: '#/components/schemas/InterfaceAnalyticsAggregateName'
+          $ref: "#/components/schemas/InterfaceAnalyticsAggregateName"
         function:
-          $ref: '#/components/schemas/Function_1'
+          $ref: "#/components/schemas/Function_1"
       example:
         name: txUtilization
         function: max
@@ -1565,15 +1483,16 @@ components:
           type: array
           description: Records are sorted based on the fields specified in the array.
           items:
-            $ref: '#/components/schemas/PaginationWithAggregateSortByRequest_sortBy'
+            $ref: "#/components/schemas/PaginationWithAggregateSortByRequest_sortBy"
     ErrorResponse:
       title: Error Response
       type: object
       properties:
         response:
           type: array
+          description: The error response object
           items:
-            $ref: '#/components/schemas/ErrorObject'
+            $ref: "#/components/schemas/ErrorObject"
         version:
           type: string
           description: The version of the response
@@ -1599,12 +1518,13 @@ components:
         detail:
           type: string
           description: "A more detailed explanation of the error condition the   parameter and its value, that caused the condition and why it caused it."
+      description: Error object containing error code and information about the error
     CountIntegerResponse:
       title: Count Integer Response
       type: object
       properties:
         response:
-          $ref: '#/components/schemas/CountIntegerResponse_response'
+          $ref: "#/components/schemas/CountIntegerResponse_response"
         version:
           type: string
           description: The version of the response
@@ -1679,7 +1599,7 @@ components:
           type: array
           description: Records are sorted based on the fields specified in the   array.
           items:
-            $ref: '#/components/schemas/Pagination_sortBy'
+            $ref: "#/components/schemas/Pagination_sortBy"
     Function_1:
       type: string
       description: Type of aggregate function to apply on the field when querying   data
@@ -1697,7 +1617,7 @@ components:
       type: object
       properties:
         name:
-          $ref: '#/components/schemas/InterfacesTrendAttributes'
+          $ref: "#/components/schemas/InterfacesTrendAttributes"
         value:
           type: object
           description: Value will always be latest within the interval
@@ -1725,14 +1645,14 @@ components:
         attributes:
           type: array
           items:
-            $ref: '#/components/schemas/InterfaceAggregateAttributes'
+            $ref: "#/components/schemas/InterfaceAggregateAttributes"
         aggregateAttributes:
-          $ref: '#/components/schemas/InterfaceResponseAggregateAttribute'
+          $ref: "#/components/schemas/InterfaceResponseAggregateAttribute"
     AggregateResponseAttributes_values:
       type: object
       properties:
         key:
-          $ref: '#/components/schemas/Function_1'
+          $ref: "#/components/schemas/Function_1"
         value:
           type: number
           description: The value for the attribute field in the given time range
@@ -1751,7 +1671,7 @@ components:
           - asc
           - desc
         function:
-          $ref: '#/components/schemas/Function_1'
+          $ref: "#/components/schemas/Function_1"
       description: List of field names and corresponding order used to sort the records.
     CountIntegerResponse_response:
       type: object
@@ -1782,48 +1702,48 @@ components:
       content:
         '*/*':
           schema:
-            $ref: '#/components/schemas/InterfaceSummaryAnalyticsGroupResponse'
+            $ref: "#/components/schemas/InterfaceSummaryAnalyticsGroupResponse"
     InterfacesResponse:
       description: Interfaces Response model on success
       content:
         '*/*':
           schema:
-            $ref: '#/components/schemas/InterfacesResponse'
+            $ref: "#/components/schemas/InterfacesResponse"
     InterfaceResponse:
       description: Interfaces Response model on success
       content:
         '*/*':
           schema:
-            $ref: '#/components/schemas/InterfaceResponse'
+            $ref: "#/components/schemas/InterfaceResponse"
     InterfacesQueryResponse:
       description: Interfaces Query Response model on success
       content:
         '*/*':
           schema:
-            $ref: '#/components/schemas/InterfacesQueryResponse'
+            $ref: "#/components/schemas/InterfacesQueryResponse"
     InterfaceTrendResponse:
       description: Interfaces Query Response model on success
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/InterfaceTrendResponseList'
+            $ref: "#/components/schemas/InterfaceTrendResponseList"
           examples:
             TrendRequestPdClassExample:
-              $ref: '#/components/examples/TrendResponsePdClassExample'
+              $ref: "#/components/examples/TrendResponsePdClassExample"
             WithoutGroupByRequestExample:
-              $ref: '#/components/examples/TrendResponsePowerBudgetExample'
+              $ref: "#/components/examples/TrendResponsePowerBudgetExample"
     "400":
       description: "The client made a request that the server could not understand (for example, the request syntax is incorrect)."
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     "500":
       description: The server could not fulfill the request due to internal server error
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     "1XX":
       description: Informational Responses - The server received the request and sent an informational response.
     "2XX":
@@ -1841,7 +1761,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CountIntegerResponse'
+            $ref: "#/components/schemas/CountIntegerResponse"
   parameters:
     InterfaceDataViews:
       name: view
@@ -1851,7 +1771,7 @@ components:
       style: form
       explode: false
       schema:
-        $ref: '#/components/schemas/InterfacesViews'
+        $ref: "#/components/schemas/InterfacesViews"
     interfaceDataAttributes:
       name: attribute
       in: query
