@@ -1,0 +1,1214 @@
+openapi: 3.0.0
+info:
+  title: Client Tracking Configurations
+  description: Open API spec to manage life cycle operations (get/create/update/delete) of Client Tracking Configurations.
+  termsOfService: https://www.cisco.com/c/en/us/about/legal/cloud-and-software/end_user_license_agreement.html
+  contact:
+    name: Cisco TAC World Wide
+    url: https://www.cisco.com/c/en/us/support/web/tsd-cisco-worldwide-contacts.html
+    email: tac@cisco.com
+  license:
+    name: Cisco Catalyst Center License
+    url: https://www.cisco.com/c/en/us/products/collateral/software/dna-software-ebook-cte.html
+  version: 3.3.1
+externalDocs:
+  description: Catalyst Center Developer API resources
+  url: https://developer.cisco.com/dnacenter/
+servers:
+- url: https://developer.cisco.com
+tags:
+- name: clientTracking
+  description: Client Tracking Configuration allows users to track a client whenever it connects and/or disconnects.
+  externalDocs:
+    description: Catalyst Center Assurance user guide
+    url: https://www.cisco.com/c/en/us/support/cloud-systems-management/dna-center/products-user-guide-list.html
+paths:
+  /dna/intent/api/v1/trackedClients:
+    get:
+      tags:
+      - trackedClients
+      summary: Read tracked-client configurations.
+      description: Returns tracked-client configurations for the customer-facing intent API.
+      operationId: readTrackedClients
+      parameters:
+      - name: X-CALLER-ID
+        in: header
+        description: |
+          Caller ID is used to trace the origin of API calls and their associated queries executed on the database. It's an optional header parameter that can be added to an API request.
+        required: false
+        schema:
+          type: string
+          default: unknown
+        example: ui:client360
+      - name: offset
+        in: query
+        description: Specifies the starting point within all records returned by the API. It's one based offset. The starting value is 1.
+        schema:
+          minimum: 1
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        description: Maximum number of records to return
+        schema:
+          maximum: 100
+          minimum: 1
+          type: integer
+          default: 100
+      - name: clientMacAddress
+        in: query
+        description: "Up to 10 stored tracked-client identifiers to match. Each value is matched against the MAC address stored on the tracked-client configuration. The stored identifier may be either the client's canonical MAC address or a randomized MAC address. To filter by correlated randomized MAC aliases, use `randomizedMacAddresses`. Invalid MAC address values are rejected."
+        required: false
+        style: form
+        explode: true
+        schema:
+          maxItems: 10
+          type: array
+          items:
+            type: string
+      - name: duid
+        in: query
+        description: Up to 10 DUID values to match. A DUID is the device identifier used to correlate related randomized MACs for the same client.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maxItems: 10
+          type: array
+          items:
+            type: string
+      - name: description
+        in: query
+        description: "Exact-match description value for tracked-client configurations. This parameter uses `eq` semantics only. For partial matching or other request-body filter combinations, use `POST /intent/api/v1/trackedClients/query`."
+        required: false
+        schema:
+          type: string
+      - name: notificationModes
+        in: query
+        description: "One or more notification modes to match. Supported values are `CONNECT_FIRST`, `CONNECT_EVERY`, and `DISCONNECT_EVERY`"
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+      - name: isPresentOnNetwork
+        in: query
+        description: Match tracked-client configurations by whether the client is present on the network within the last 28 days.
+        required: false
+        schema:
+          type: boolean
+      - name: randomizedMacAddresses
+        in: query
+        description: Up to 10 randomized MAC addresses to match against the tracked client. These addresses are matched through the client-correlation data associated with the DUID when available.
+        required: false
+        style: form
+        explode: true
+        schema:
+          maxItems: 10
+          type: array
+          items:
+            type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/TrackedClientsListResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+    post:
+      tags:
+      - trackedClients
+      summary: Create a tracked-client configuration.
+      description: "Creates one MAC-based tracked-client configuration through the customer-facing intent API. All create fields are mandatory. Use an empty string for `description` when no description is needed, `trackingStartTime: 0` to start tracking at the current server time, and `trackingEndTime: 0` for never-expiring tracking."
+      operationId: createTrackedClient
+      parameters:
+      - name: X-CALLER-ID
+        in: header
+        description: |
+          Caller ID is used to trace the origin of API calls and their associated queries executed on the database. It's an optional header parameter that can be added to an API request.
+        required: false
+        schema:
+          type: string
+          default: unknown
+        example: ui:client360
+      requestBody:
+        description: Payload to create a tracked-client configuration.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackedClientRequest"
+            examples:
+              Create tracked client:
+                $ref: "#/components/examples/TrackedClientCreateRequestExample"
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/TrackedClientResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /dna/intent/api/v1/trackedClients/query:
+    post:
+      tags:
+      - trackedClients
+      summary: Query tracked-client configurations with request-body filters.
+      description: "Returns tracked-client configurations matching the provided request-body filters.\nTop-level filters are combined with logical AND. To express OR logic, wrap child clauses inside a filter object that contains `logicalOperator` and nested `filters`. Only one level of nested filters is supported. Child filters inside a group cannot contain nested `filters` of their own.\nSupported filter keys are `clientMacAddress`, `duid`, `description`, `notificationModes`, `trackingStartTime`, `trackingEndTime`, `isPresentOnNetwork`, and `randomizedMacAddresses`.\nSupported operators by field are: `clientMacAddress`, `duid`, `description`: `eq`, `neq`, `in`, `notIn`, `like` `trackingStartTime`, `trackingEndTime`: `eq`, `neq`, `lt`, `gt`, `lte`, `gte` `isPresentOnNetwork`: `eq`, `neq` `randomizedMacAddresses`: `eq`, `neq`, `in`, `notIn`, `like` `notificationModes`: `in`, `notIn`\nUse `like` on this request-body API for partial matching on `description`, `clientMacAddress`, `duid`, and `randomizedMacAddresses`.\nFor `trackingEndTime`, value `0` represents never-expiring tracking.\n  \nThe `page.sortBy` field accepts only tracked-client fields that produce stable, meaningful ordering for the configuration list: `clientMacAddress`, `duid`, `description`, `trackingStartTime`, `trackingEndTime`, `lastOnboardedTime`, `lastDisconnectedTime`, and `isPresentOnNetwork`.\nOnly single-field sorting is supported on this API."
+      operationId: queryTrackedClients
+      parameters:
+      - name: X-CALLER-ID
+        in: header
+        description: |
+          Caller ID is used to trace the origin of API calls and their associated queries executed on the database. It's an optional header parameter that can be added to an API request.
+        required: false
+        schema:
+          type: string
+          default: unknown
+        example: ui:client360
+      requestBody:
+        description: Filter payload for tracked-client configuration queries.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackedClientQueryRequest"
+            examples:
+              Query tracked clients:
+                $ref: "#/components/examples/TrackedClientQueryRequestExample"
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/TrackedClientsListResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /dna/intent/api/v1/trackedClients/{id}:
+    get:
+      tags:
+      - trackedClients
+      summary: Read a tracked-client configuration by client identifier.
+      description: Returns one tracked-client configuration for the given client identifier.
+      operationId: readTrackedClientById
+      parameters:
+      - name: X-CALLER-ID
+        in: header
+        description: |
+          Caller ID is used to trace the origin of API calls and their associated queries executed on the database. It's an optional header parameter that can be added to an API request.
+        required: false
+        schema:
+          type: string
+          default: unknown
+        example: ui:client360
+      - name: id
+        in: path
+        description: Tracked-client identifier. This is the MAC address stored on the tracked-client configuration. The stored identifier may be either the client's canonical MAC address or a randomized MAC address. Correlated randomized MACs listed in `randomizedMacAddresses` are not interchangeable resource identifiers for this path.
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/TrackedClientResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+    put:
+      tags:
+      - trackedClients
+      summary: Partially update a tracked-client configuration.
+      description: "Partially updates a MAC-based tracked-client configuration for the given client identifier. Omitted fields keep their existing values. At least one of `description`, `trackingStartTime`, `trackingEndTime`, or `notificationModes` must be supplied. Use `trackingStartTime: 0` to restart tracking at the current server time and `trackingEndTime: 0` for never-expiring tracking."
+      operationId: updateTrackedClientById
+      parameters:
+      - name: X-CALLER-ID
+        in: header
+        description: |
+          Caller ID is used to trace the origin of API calls and their associated queries executed on the database. It's an optional header parameter that can be added to an API request.
+        required: false
+        schema:
+          type: string
+          default: unknown
+        example: ui:client360
+      - name: id
+        in: path
+        description: Tracked-client identifier. This is the MAC address stored on the tracked-client configuration. The stored identifier may be either the client's canonical MAC address or a randomized MAC address. Correlated randomized MACs listed in `randomizedMacAddresses` are not interchangeable resource identifiers for this path.
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Partial tracked-client update payload. The tracked-client identifier is supplied by the path parameter.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackedClientUpdateByIdRequest"
+            examples:
+              Update tracked client:
+                $ref: "#/components/examples/TrackedClientUpdateByIdRequestExample"
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/TrackedClientResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "409":
+          $ref: "#/components/responses/409"
+        "500":
+          $ref: "#/components/responses/500"
+    delete:
+      tags:
+      - trackedClients
+      summary: Delete a tracked-client configuration.
+      description: Deletes the tracked-client configuration for the given client identifier.
+      operationId: deleteTrackedClientById
+      parameters:
+      - name: X-CALLER-ID
+        in: header
+        description: |
+          Caller ID is used to trace the origin of API calls and their associated queries executed on the database. It's an optional header parameter that can be added to an API request.
+        required: false
+        schema:
+          type: string
+          default: unknown
+        example: ui:client360
+      - name: id
+        in: path
+        description: Tracked-client identifier. This is the MAC address stored on the tracked-client configuration. The stored identifier may be either the client's canonical MAC address or a randomized MAC address. Correlated randomized MACs listed in `randomizedMacAddresses` are not interchangeable resource identifiers for this path.
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          $ref: "#/components/responses/TrackedClientDeleteResponse"
+        "400":
+          $ref: "#/components/responses/400"
+        "403":
+          $ref: "#/components/responses/403"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+  /dna/intent/api/v1/trackedClients/bulkCreate:
+    post:
+      tags:
+      - trackedClients
+      summary: Bulk create tracked-client configurations.
+      description: "Creates multiple MAC-based tracked-client configurations in one request. Catalyst Center supports up to 2000 tracked-client configurations at a time.  All fields in each create item are mandatory. Use an empty string for `description` when no description is needed, `trackingStartTime: 0` to start tracking at the current server time, and `trackingEndTime: 0` for never-expiring tracking. Each item is processed independently. If processing an item would cause the total tracked-client configuration count to exceed 2000, that item is returned as a failed result."
+      operationId: bulkCreateTrackedClients
+      parameters:
+      - name: X-CALLER-ID
+        in: header
+        description: |
+          Caller ID is used to trace the origin of API calls and their associated queries executed on the database. It's an optional header parameter that can be added to an API request.
+        required: false
+        schema:
+          type: string
+          default: unknown
+        example: ui:client360
+      requestBody:
+        description: Array of tracked-client create payloads. Catalyst Center supports up to 2000 tracked-client configurations at a time.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackedClientBulkUpsertRequest"
+            examples:
+              Bulk create tracked clients:
+                $ref: "#/components/examples/TrackedClientBulkCreateRequestExample"
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/TrackedClientBulkOperationResponse"
+        "207":
+          description: Returned per-item results for a bulk request with a mix of successful and failed tracked-client operations.
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: "#/components/schemas/TrackedClientBulkOperationResponse"
+              examples:
+                trackedClientBulkOperationResponse:
+                  $ref: "#/components/examples/TrackedClientBulkOperationResponseExample"
+        "400":
+          $ref: "#/components/responses/TrackedClientBulkOperationBadRequestResponse"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /dna/intent/api/v1/trackedClients/bulkUpdate:
+    post:
+      tags:
+      - trackedClients
+      summary: Bulk partially update tracked-client configurations.
+      description: "Partially updates multiple MAC-based tracked-client configurations in one request. Catalyst Center supports up to 2000 tracked-client configurations at a time. Each item is processed independently. Omitted fields keep their existing values. Each item must include `clientMacAddress` and at least one of `description`, `trackingStartTime`, `trackingEndTime`, or `notificationModes`. Use `trackingStartTime: 0` to restart tracking at the current server time and `trackingEndTime: 0` for never-expiring tracking. Unknown `clientMacAddress` targets are returned as item-level `FAILURE` results and are not created as a side effect of bulk update."
+      operationId: bulkUpdateTrackedClients
+      parameters:
+      - name: X-CALLER-ID
+        in: header
+        description: |
+          Caller ID is used to trace the origin of API calls and their associated queries executed on the database. It's an optional header parameter that can be added to an API request.
+        required: false
+        schema:
+          type: string
+          default: unknown
+        example: ui:client360
+      requestBody:
+        description: Array of partial tracked-client update payloads. Catalyst Center supports up to 2000 tracked-client configurations at a time. Each target must already exist.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackedClientBulkUpdateRequest"
+            examples:
+              Bulk update tracked clients:
+                $ref: "#/components/examples/TrackedClientBulkUpdateRequestExample"
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/TrackedClientBulkOperationResponse"
+        "207":
+          description: Returned per-item results for a bulk request with a mix of successful and failed tracked-client operations.
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: "#/components/schemas/TrackedClientBulkOperationResponse"
+              examples:
+                trackedClientBulkOperationResponse:
+                  $ref: "#/components/examples/TrackedClientBulkOperationResponseExample"
+        "400":
+          $ref: "#/components/responses/TrackedClientBulkOperationBadRequestResponse"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+  /dna/intent/api/v1/trackedClients/bulkDelete:
+    post:
+      tags:
+      - trackedClients
+      summary: Bulk delete tracked-client configurations.
+      description: "Deletes multiple tracked-client configurations in one request. Supports up to 2000 items. Returns one result per input item, including item-level validation or processing failures."
+      operationId: bulkDeleteTrackedClients
+      parameters:
+      - name: X-CALLER-ID
+        in: header
+        description: |
+          Caller ID is used to trace the origin of API calls and their associated queries executed on the database. It's an optional header parameter that can be added to an API request.
+        required: false
+        schema:
+          type: string
+          default: unknown
+        example: ui:client360
+      requestBody:
+        description: Array of tracked-client identifiers to delete. Supports up to 2000 items.
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TrackedClientBulkDeleteRequest"
+            examples:
+              Bulk delete tracked clients:
+                $ref: "#/components/examples/TrackedClientBulkDeleteRequestExample"
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/TrackedClientBulkOperationResponse"
+        "207":
+          description: Returned per-item results for a bulk request with a mix of successful and failed tracked-client operations.
+          content:
+            application/json; charset=utf-8:
+              schema:
+                $ref: "#/components/schemas/TrackedClientBulkOperationResponse"
+              examples:
+                trackedClientBulkOperationResponse:
+                  $ref: "#/components/examples/TrackedClientBulkOperationResponseExample"
+        "400":
+          $ref: "#/components/responses/TrackedClientBulkOperationBadRequestResponse"
+        "403":
+          $ref: "#/components/responses/403"
+        "500":
+          $ref: "#/components/responses/500"
+components:
+  schemas:
+    TrackedClientRequest:
+      required:
+      - clientMacAddress
+      - description
+      - notificationModes
+      - trackingEndTime
+      - trackingStartTime
+      type: object
+      properties:
+        clientMacAddress:
+          type: string
+          description: MAC address stored as the tracked-client configuration identifier. The stored identifier may be either the client's canonical MAC address or a randomized MAC address.
+          example: 11:22:33:44:55:66
+        description:
+          type: string
+          description: User-provided description for the tracked client. Use an empty string when no description is needed.
+          example: CEO iPhone
+        trackingStartTime:
+          type: integer
+          description: Start time of the active tracking interval in UNIX epoch time milliseconds. Use `0` to start tracking at the current server time.
+          format: int64
+          example: 1773792000000
+        trackingEndTime:
+          type: integer
+          description: End time of the active tracking interval in UNIX epoch time milliseconds. Use `0` for never-expiring tracking.
+          format: int64
+          example: 1774396800000
+        notificationModes:
+          minItems: 1
+          uniqueItems: true
+          type: array
+          description: Enabled notification modes for the tracked client.
+          items:
+            $ref: "#/components/schemas/TrackedClientNotificationMode"
+      description: Request model for tracked-client configurations in the customer-facing intent API.
+    TrackedClientUpdateByIdRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          description: User-provided description for the tracked client. Omit to keep the current value.
+          example: CEO iPhone
+        trackingStartTime:
+          type: integer
+          description: Start time of the active tracking interval in UNIX epoch time milliseconds. Use `0` to restart tracking at the current server time. Omit to keep the current value.
+          format: int64
+          example: 1773792000000
+        trackingEndTime:
+          type: integer
+          description: End time of the active tracking interval in UNIX epoch time milliseconds. Use `0` for never-expiring tracking. Omit to keep the current value.
+          format: int64
+          example: 1774396800000
+        notificationModes:
+          minItems: 1
+          uniqueItems: true
+          type: array
+          description: Enabled notification modes for the tracked client. Omit to keep the current value.
+          items:
+            $ref: "#/components/schemas/TrackedClientNotificationMode"
+      description: Partial update-by-id model for tracked-client configurations. The tracked-client identifier is supplied by the path parameter. Omitted fields keep their existing values. At least one updatable field must be supplied.
+    TrackedClient:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the tracked-client resource. It currently matches the MAC address stored on the tracked-client configuration. The stored identifier may be either the client's canonical MAC address or a randomized MAC address.
+          example: 11:22:33:44:55:66
+        clientMacAddress:
+          type: string
+          description: MAC address stored on the tracked-client configuration. The stored identifier may be either the client's canonical MAC address or a randomized MAC address.
+          example: 11:22:33:44:55:66
+        duid:
+          type: string
+          description: Device identifier associated with the tracked client when available. This value is used to correlate randomized MACs for the same client.
+          example: device-uid-12345
+        description:
+          type: string
+          description: User-provided description for the tracked client.
+        trackingStartTime:
+          type: integer
+          description: Start time of the active tracking interval in UNIX epoch time milliseconds. A value of `0` in requests means tracking starts at the current server time.
+          format: int64
+          example: 1773792000000
+        trackingEndTime:
+          type: integer
+          description: End time of the active tracking interval in UNIX epoch time milliseconds. A value of `0` indicates never-expiring tracking.
+          format: int64
+          example: 1774396800000
+        notificationModes:
+          minItems: 1
+          uniqueItems: true
+          type: array
+          description: Enabled notification modes for the tracked client.
+          items:
+            $ref: "#/components/schemas/TrackedClientNotificationMode"
+        lastOnboardedTime:
+          type: integer
+          description: Most recent time the tracked client was onboarded to the network within the configured tracking window.
+          format: int64
+          example: 1773792100000
+        lastDisconnectedTime:
+          type: integer
+          description: Most recent time the tracked client disconnected from the network within the configured tracking window.
+          format: int64
+          example: 1773795100000
+        isPresentOnNetwork:
+          type: boolean
+          description: Indicates whether the tracked client is currently present on the network within the last 28 days.
+          example: true
+        randomizedMacAddresses:
+          type: array
+          description: List of randomized MAC addresses associated with the tracked client through DUID-based client correlation when available. These values are exposed for visibility and filtering; they are not alternate by-id resource identifiers.
+          example:
+          - da:7a:11:22:33:44
+          items:
+            type: string
+      description: Tracked-client resource returned by the customer-facing intent API.
+    TrackedClientNotificationMode:
+      type: string
+      description: Notification mode exposed by the tracked-client intent API.
+      enum:
+      - CONNECT_FIRST
+      - CONNECT_EVERY
+      - DISCONNECT_EVERY
+    TrackedClientResponse:
+      type: object
+      properties:
+        response:
+          $ref: "#/components/schemas/TrackedClient"
+        version:
+          type: string
+          description: The version of the response.
+          example: "1.0"
+      description: Response wrapper for one tracked-client configuration.
+    TrackedClientsListResponse:
+      type: object
+      properties:
+        response:
+          type: array
+          description: Tracked-client configurations returned for the request.
+          items:
+            $ref: "#/components/schemas/TrackedClient"
+        page:
+          $ref: "#/components/schemas/PaginationResponse"
+        version:
+          type: string
+          description: The version of the response.
+          example: "1.0"
+      description: Response wrapper for a list of tracked-client configurations.
+    TrackedClientBulkOperationResponse:
+      type: object
+      properties:
+        response:
+          type: array
+          description: Per-item results for the bulk operation.
+          items:
+            $ref: "#/components/schemas/TrackedClientOperationResult"
+        version:
+          type: string
+          description: The version of the response.
+          example: "1.0"
+      description: Response wrapper for tracked-client bulk operations.
+    TrackedClientDeleteResponse:
+      type: object
+      properties:
+        response:
+          $ref: "#/components/schemas/TrackedClientOperationResult"
+        version:
+          type: string
+          description: The version of the response.
+          example: "1.0"
+      description: Response wrapper for a single tracked-client delete operation.
+    TrackedClientBulkUpsertRequest:
+      maxItems: 2000
+      type: array
+      description: Array of tracked-client create payloads. Catalyst Center supports up to 2000 tracked-client configurations at a time.
+      items:
+        $ref: "#/components/schemas/TrackedClientRequest"
+    TrackedClientBulkUpdateItem:
+      required:
+      - clientMacAddress
+      type: object
+      properties:
+        clientMacAddress:
+          type: string
+          description: MAC address stored as the tracked-client configuration identifier. The target must already exist; bulk update reports unknown targets as item-level failures and does not create them.
+          example: 11:22:33:44:55:66
+        description:
+          type: string
+          description: User-provided description for the tracked client. Omit to keep the current value.
+          example: CEO iPhone
+        trackingStartTime:
+          type: integer
+          description: Start time of the active tracking interval in UNIX epoch time milliseconds. Use `0` to restart tracking at the current server time. Omit to keep the current value.
+          format: int64
+          example: 1773792000000
+        trackingEndTime:
+          type: integer
+          description: End time of the active tracking interval in UNIX epoch time milliseconds. Use `0` for never-expiring tracking. Omit to keep the current value.
+          format: int64
+          example: 1774396800000
+        notificationModes:
+          uniqueItems: true
+          type: array
+          description: Enabled notification modes for the tracked client. Omit to keep the current value.
+          items:
+            $ref: "#/components/schemas/TrackedClientNotificationMode"
+      description: "Partial update item for a tracked-client configuration.   `clientMacAddress` identifies the existing target to update. Omitted updatable fields keep their existing values. At least one of `description`, `trackingStartTime`, `trackingEndTime`, or `notificationModes` must be supplied."
+    TrackedClientBulkUpdateRequest:
+      maxItems: 2000
+      type: array
+      description: Array of partial tracked-client update payloads. Each item must identify an existing tracked-client configuration by `clientMacAddress` and include at least one field to update.
+      items:
+        $ref: "#/components/schemas/TrackedClientBulkUpdateItem"
+    TrackedClientQueryRequest:
+      type: object
+      properties:
+        filters:
+          $ref: "#/components/schemas/TrackedClientQueryFilters"
+        page:
+          $ref: "#/components/schemas/TrackedClientQueryPage"
+      description: Request-body query model for tracked-client configurations. Top-level `filters` are combined with logical AND. Use nested `filters` with `logicalOperator` to express explicit AND/OR groups. Only one level of nested filters is supported.
+    TrackedClientQueryFilters:
+      type: array
+      description: |
+        List of filters to apply when querying tracked-client configurations.
+
+        Supported operators by field are:
+        `clientMacAddress`, `duid`, `description`: [eq, neq, in, notIn, like, liker]
+        `trackingStartTime`, `trackingEndTime`: [eq, neq, lt, gt, lte, gte]
+        `isPresentOnNetwork`: [eq, neq]
+        `randomizedMacAddresses`: [eq, neq, in, notIn, like, liker]
+        `notificationModes`: [in, notIn]
+
+        For `trackingEndTime`, value `0` represents never-expiring tracking.
+
+        Nested filter composition is supported through `logicalOperator` and nested `filters`.
+        Only one level of nested filters is supported.
+      items:
+        $ref: "#/components/schemas/TrackedClientQueryFilterObj"
+    TrackedClientQueryFilterObj:
+      type: object
+      properties:
+        key:
+          $ref: "#/components/schemas/TrackedClientQueryField"
+        operator:
+          $ref: "#/components/schemas/Operator"
+        logicalOperator:
+          $ref: "#/components/schemas/LogicalOperator"
+        value:
+          type: object
+          description: "Value or values to apply with the filter operator. Depending on the field and operator, this may be a string, number, boolean, or array of scalar values."
+        filters:
+          type: array
+          description: Nested tracked-client filters used with `logicalOperator`. Child filters cannot contain nested `filters` of their own.
+          items:
+            $ref: "#/components/schemas/TrackedClientQueryFilterObj"
+      description: "One tracked-client filter clause. Use `key`, `operator`, and `value` for a direct field filter. Use `logicalOperator` with nested `filters` for grouped expressions. Only one level of nested filters is supported."
+    TrackedClientQueryField:
+      type: string
+      description: Supported tracked-client fields for request-body query filtering.
+      enum:
+      - clientMacAddress
+      - duid
+      - description
+      - notificationModes
+      - trackingStartTime
+      - trackingEndTime
+      - isPresentOnNetwork
+      - randomizedMacAddresses
+    TrackedClientSortByField:
+      type: string
+      description: Supported tracked-client fields for request-body sorting.
+      enum:
+      - clientMacAddress
+      - duid
+      - description
+      - trackingStartTime
+      - trackingEndTime
+      - lastOnboardedTime
+      - lastDisconnectedTime
+      - isPresentOnNetwork
+    TrackedClientSortByObj:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/TrackedClientSortByField"
+        order:
+          type: string
+          description: Sort order. 'asc' for ascending and 'desc' for descending.
+          enum:
+          - asc
+          - desc
+      description: Sort definition for tracked-client query results.
+    TrackedClientQueryPage:
+      type: object
+      properties:
+        limit:
+          maximum: 100
+          minimum: 1
+          type: integer
+          description: Maximum number of tracked-client records to return in one page.
+          example: 100
+          default: 100
+        offset:
+          minimum: 1
+          type: integer
+          description: One-based starting offset for the tracked-client query results.
+          example: 1
+          default: 1
+        sortBy:
+          maxItems: 1
+          type: array
+          description: |
+            Sort fields applied before pagination. Only single-field sorting is supported on this API.
+          items:
+            $ref: "#/components/schemas/TrackedClientSortByObj"
+      description: Pagination input for tracked-client queries.
+    TrackedClientDeleteItem:
+      required:
+      - clientMacAddress
+      type: object
+      properties:
+        clientMacAddress:
+          type: string
+          description: MAC address stored on the tracked-client configuration. The stored identifier may be either the client's canonical MAC address or a randomized MAC address.
+          example: 11:22:33:44:55:66
+        duid:
+          type: string
+          description: Optional device identifier used to correlate same-device records for cleanup.
+          example: device-uid-12345
+      description: Identifier used in bulk delete requests.
+    TrackedClientBulkDeleteRequest:
+      maxItems: 2000
+      type: array
+      description: Array of tracked-client identifiers to delete. Supports up to 2000 items.
+      items:
+        $ref: "#/components/schemas/TrackedClientDeleteItem"
+    TrackedClientOperationResult:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the tracked-client resource. It currently matches the MAC address stored on the tracked-client configuration. The stored identifier may be either the client's canonical MAC address or a randomized MAC address.
+          example: 11:22:33:44:55:66
+        clientMacAddress:
+          type: string
+          description: MAC address stored on the tracked-client configuration. The stored identifier may be either the client's canonical MAC address or a randomized MAC address.
+          example: 11:22:33:44:55:66
+        duid:
+          type: string
+          description: Device identifier for the result item when available. This value correlates related randomized MACs for the same client.
+          example: device-uid-12345
+        status:
+          type: string
+          description: Operation result status.
+          example: SUCCESS
+          enum:
+          - SUCCESS
+          - FAILURE
+        message:
+          type: string
+          description: Human-readable result message.
+          example: Tracked client processed successfully
+      description: Per-item result for tracked-client bulk operations.
+    ErrorResponse:
+      title: Error Response
+      type: object
+      properties:
+        response:
+          type: array
+          description: The error response object
+          items:
+            $ref: "#/components/schemas/ErrorObject"
+        version:
+          type: string
+          description: The version of the response
+          example: "1.0"
+      description: Contains information explaining the error that occured   processing this request.
+      example:
+        response:
+        - errorCode: 2600
+          message: Error message
+          detail: Error details
+      externalDocs:
+        description: Error Codes - Cisco DevNet
+        url: https://developer.cisco.com/docs/dna-center/#!api-quick-start/error-codes
+    ErrorObject:
+      type: object
+      properties:
+        errorCode:
+          type: integer
+          description: Application specific error code returned by the server
+        message:
+          type: string
+          description: Brief message about the error condition
+        detail:
+          type: string
+          description: "A more detailed explanation of the error condition the   parameter and its value, that caused the condition and why it caused it."
+      description: Error object containing error code and information about the error
+    PaginationResponse:
+      type: object
+      properties:
+        limit:
+          type: integer
+          description: The reference to the limit applied in the Pagination   Request.
+          example: 10
+        offset:
+          type: integer
+          description: The reference to the record offset applied in the   Pagination Request.
+          example: 1
+        count:
+          type: integer
+          description: Total number of records related to the resource after   applying applicable filtering
+          example: 20
+        sortBy:
+          type: array
+          description: Reference to the sortBy that was applied in the Pagination   Request.
+          items:
+            $ref: "#/components/schemas/PaginationResponse_sortBy"
+    Operator:
+      type: string
+      description: Type of filter operator to use for querying data | in and out operator takes multiple values and applies the filters
+      enum:
+      - in
+      - neq
+      - lt
+      - gt
+      - lte
+      - gte
+      - eq
+      - notIn
+      - like
+    LogicalOperator:
+      type: string
+      description: |
+        Operator to use when attempting to apply a logical conjunction of more   than 1 filter
+
+        Logical operations include: 'and', 'or'.
+      enum:
+      - and
+      - or
+    PaginationResponse_sortBy:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Field name by which sort is requested
+          example: siteHierarchy
+        order:
+          type: string
+          description: Sort order. 'asc' for ascending and 'desc' for   descending
+          example: asc
+          enum:
+          - asc
+          - desc
+      description: List of field names and corresponding order used to sort   the records.
+  responses:
+    TrackedClientResponse:
+      description: Successfully returned one tracked-client configuration.
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: "#/components/schemas/TrackedClientResponse"
+          examples:
+            trackedClientResponse:
+              $ref: "#/components/examples/TrackedClientResponseExample"
+    TrackedClientsListResponse:
+      description: Successfully returned a list of tracked-client configurations.
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: "#/components/schemas/TrackedClientsListResponse"
+          examples:
+            trackedClientsListResponse:
+              $ref: "#/components/examples/TrackedClientsListResponseExample"
+    TrackedClientBulkOperationResponse:
+      description: Successfully returned per-item results for a tracked-client bulk operation.
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: "#/components/schemas/TrackedClientBulkOperationResponse"
+          examples:
+            trackedClientBulkOperationResponse:
+              $ref: "#/components/examples/TrackedClientBulkOperationSuccessResponseExample"
+    TrackedClientBulkOperationBadRequestResponse:
+      description: "The client made a request that the server could not understand (for example, the request syntax is incorrect)."
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: "#/components/schemas/TrackedClientBulkOperationResponse"
+          examples:
+            trackedClientBulkOperationResponse:
+              $ref: "#/components/examples/TrackedClientBulkOperationFailureResponseExample"
+    TrackedClientDeleteResponse:
+      description: Successfully returned the deleted tracked-client identifier details.
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: "#/components/schemas/TrackedClientDeleteResponse"
+          examples:
+            trackedClientDeleteResponse:
+              $ref: "#/components/examples/TrackedClientDeleteResponseExample"
+    "400":
+      description: "The client made a request that the server could not understand (for example, the request syntax is incorrect)."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    "403":
+      description: "The server recognizes the authentication credentials, but the client is not authorized to perform this request."
+    "500":
+      description: The server could not fulfill the request due to internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    "404":
+      description: The client made a request for a resource that does not exist.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    "409":
+      description: "The target resource is in a conflicted state (for example, an edit conflict where a resource is being edited by multiple users). Retrying the request later might succeed."
+  parameters:
+    clientTrackingConfigEntityType:
+      name: entityType
+      in: query
+      description: |
+        client tracking entity type.
+
+        Examples:
+        `?entityType=clientMacAddress`
+      required: true
+      schema:
+        type: string
+        enum:
+        - clientMacAddress
+        - duid
+    clientTrackingConfigEntityIds:
+      name: entityIds
+      in: query
+      description: |
+        Entity id with which the client tracking configuration is associated.
+
+        Examples:
+        `?entityId=2ee1b9f0-8036-443b-bad0-7692760af1b5`(single id requested)
+
+        `?entityId=11:AA:BB:CC:DD:EF&entityId=ae368f0b-f4e3-4e8f-a914-011cbd19bb51` (multiple ids requested)
+      required: true
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+    notificationTypes:
+      name: notificationType
+      in: query
+      description: |
+        Type of the client tracking configuration. Examples: type=FIRST_CONNECT (single client tracking configuration notification type requested) type=FIRST_CONNECT&type=EVERY_DISCONNECT (multiple client tracking configuration notification types requested)
+      required: true
+      style: form
+      explode: true
+      schema:
+        type: array
+        items:
+          type: string
+          description: Type of the client tracking configuration
+          enum:
+          - FIRST_CONNECT
+          - EVERY_CONNECT
+          - EVERY_DISCONNECT
+    callerId:
+      name: X-CALLER-ID
+      in: header
+      description: |
+        Caller ID is used to trace the origin of API calls and their associated queries executed on the database. It's an optional header parameter that can be added to an API request.
+      required: false
+      schema:
+        type: string
+        default: unknown
+      example: ui:client360
+    offset:
+      name: offset
+      in: query
+      description: Specifies the starting point within all records returned by the API. It's one based offset. The starting value is 1.
+      schema:
+        minimum: 1
+        type: integer
+        default: 1
+    limit_100:
+      name: limit
+      in: query
+      description: Maximum number of records to return
+      schema:
+        maximum: 100
+        minimum: 1
+        type: integer
+        default: 100
+  examples:
+    TrackedClientCreateRequestExample:
+      summary: Create tracked-client request example
+      value:
+        clientMacAddress: 11:22:33:44:55:66
+        description: ""
+        trackingStartTime: 0
+        trackingEndTime: 0
+        notificationModes:
+        - CONNECT_EVERY
+        - DISCONNECT_EVERY
+    TrackedClientUpdateByIdRequestExample:
+      summary: Partial update tracked-client by id request example
+      value:
+        description: CEO iPhone - updated
+        trackingEndTime: 0
+    TrackedClientBulkCreateRequestExample:
+      summary: Bulk create tracked-client request example
+      value:
+      - clientMacAddress: 11:22:33:44:55:66
+        description: CEO iPhone
+        trackingStartTime: 1773792000000
+        trackingEndTime: 1774396800000
+        notificationModes:
+        - CONNECT_EVERY
+        - DISCONNECT_EVERY
+      - clientMacAddress: 22:33:44:55:66:77
+        description: ""
+        trackingStartTime: 0
+        trackingEndTime: 0
+        notificationModes:
+        - CONNECT_FIRST
+    TrackedClientBulkUpdateRequestExample:
+      summary: Bulk partial tracked-client update request example
+      value:
+      - clientMacAddress: 11:22:33:44:55:66
+        description: CEO iPhone - updated
+        trackingEndTime: 0
+      - clientMacAddress: 22:33:44:55:66:77
+        notificationModes:
+        - CONNECT_EVERY
+    TrackedClientBulkDeleteRequestExample:
+      summary: Bulk delete tracked-client request example
+      value:
+      - clientMacAddress: 11:22:33:44:55:66
+        duid: device-uid-12345
+      - clientMacAddress: 22:33:44:55:66:77
+    TrackedClientQueryRequestExample:
+      summary: Query tracked-client request example
+      value:
+        filters:
+        - key: description
+          operator: like
+          value: CEO
+        - logicalOperator: or
+          filters:
+          - key: clientMacAddress
+            operator: eq
+            value: 11:22:33:44:55:66
+          - key: notificationModes
+            operator: eq
+            value: CONNECT_EVERY
+        - key: isPresentOnNetwork
+          operator: eq
+          value: true
+        page:
+          limit: 25
+          offset: 1
+          sortBy:
+          - name: lastOnboardedTime
+            order: desc
+    TrackedClientResponseExample:
+      summary: Single tracked-client response example
+      value:
+        response:
+          id: 11:22:33:44:55:66
+          clientMacAddress: 11:22:33:44:55:66
+          duid: device-uid-12345
+          description: CEO iPhone
+          trackingStartTime: 1773792000000
+          trackingEndTime: 1774396800000
+          notificationModes:
+          - CONNECT_EVERY
+          - DISCONNECT_EVERY
+          lastOnboardedTime: 1773792100000
+          lastDisconnectedTime: 1773795100000
+          isPresentOnNetwork: true
+          randomizedMacAddresses:
+          - da:7a:11:22:33:44
+        version: "1.0"
+    TrackedClientsListResponseExample:
+      summary: Tracked-client list response example
+      value:
+        response:
+        - id: 11:22:33:44:55:66
+          clientMacAddress: 11:22:33:44:55:66
+          duid: device-uid-12345
+          description: CEO iPhone
+          trackingStartTime: 1773792000000
+          trackingEndTime: 1774396800000
+          notificationModes:
+          - CONNECT_EVERY
+          - DISCONNECT_EVERY
+          lastOnboardedTime: 1773792100000
+          lastDisconnectedTime: 1773795100000
+          isPresentOnNetwork: true
+          randomizedMacAddresses:
+          - da:7a:11:22:33:44
+        page:
+          limit: 100
+          offset: 1
+          count: 1
+        version: "1.0"
+    TrackedClientBulkOperationSuccessResponseExample:
+      summary: Tracked-client bulk operation success response example
+      value:
+        response:
+        - id: 11:22:33:44:55:66
+          clientMacAddress: 11:22:33:44:55:66
+          duid: device-uid-12345
+          status: SUCCESS
+          message: Tracked client processed successfully
+        - id: 22:33:44:55:66:77
+          clientMacAddress: 22:33:44:55:66:77
+          duid: device-uid-67890
+          status: SUCCESS
+          message: Tracked client processed successfully
+        version: "1.0"
+    TrackedClientBulkOperationResponseExample:
+      summary: Tracked-client bulk operation mixed response example
+      value:
+        response:
+        - id: 11:22:33:44:55:66
+          clientMacAddress: 11:22:33:44:55:66
+          duid: device-uid-12345
+          status: SUCCESS
+          message: Tracked client processed successfully
+        - id: 22:33:44:55:66:77
+          clientMacAddress: 22:33:44:55:66:77
+          status: FAILURE
+          message: Tracked client not found for 22:33:44:55:66:77
+    TrackedClientBulkOperationFailureResponseExample:
+      summary: Tracked-client bulk operation all-failure response example
+      value:
+        response:
+        - id: 11:22:33:44:55:66
+          clientMacAddress: 11:22:33:44:55:66
+          status: FAILURE
+          message: Tracked client not found for 11:22:33:44:55:66
+        - id: 22:33:44:55:66:77
+          clientMacAddress: 22:33:44:55:66:77
+          status: FAILURE
+          message: At least one tracked-client update field is required
+        version: "1.0"
+    TrackedClientDeleteResponseExample:
+      summary: Tracked-client delete response example
+      value:
+        response:
+          id: 11:22:33:44:55:66
+          clientMacAddress: 11:22:33:44:55:66
+          duid: device-uid-12345
+          status: SUCCESS
+          message: Tracked client processed successfully
+        version: "1.0"
+  requestBodies:
+    UploadConfigFileRequestModel:
+      description: Uplaod Client tracking config file model
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
