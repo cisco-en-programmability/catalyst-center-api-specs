@@ -11,7 +11,8 @@ info:
     url: https://www.cisco.com/c/en/us/products/collateral/software/dna-software-ebook-cte.html
   version: 3.4.1
 servers:
-- url: https://developer.cisco.com
+- url: https://developer.cisco.com/dna/data/api/v1
+  description: DEFAULT_BASEPATH
 tags:
 - name: issues
   description: Operations related to Catalyst Center - Assurance Issues
@@ -19,12 +20,12 @@ tags:
     description: Catalyst Center Assurance user guide
     url: https://www.cisco.com/c/en/us/support/cloud-systems-management/dna-center/products-user-guide-list.html
 paths:
-  /dna/data/api/v1/assuranceIssues/{id}:
+  /assuranceIssues/{id}:
     get:
       tags:
       - issues
       summary: Get all the details and suggested actions of an issue for the given issue id
-      description: Returns all the details and suggested actions of an issue for the given issue id.
+      description: "Returns all the details and suggested actions of an issue for the given issue id. For detailed information about the usage of the API, please refer to the Open API specification document - https://github.com/cisco-en-programmability/catalyst-center-api-specs/blob/main/Assurance/CE_Cat_Center_Org-IssuesList-3.4.1-resolved.yaml."
       operationId: readIssueById
       parameters:
       - name: X-CALLER-ID
@@ -112,7 +113,21 @@ paths:
           $ref: "#/components/responses/5XX"
         default:
           $ref: "#/components/responses/defaultError"
-  /dna/data/api/v1/assuranceIssues/{id}/impactedClients:
+      x-rapi-id: e0bb-d899-4b8b-af05
+      x-rapi-domain: Know Your Network
+      x-rapi-subdomain: Issues
+      x-rapi-hideInCP: false
+      x-rapi-banner: []
+      x-rapi-policies:
+      - type: rate-limiting
+        count: 100
+        duration: MINUTE
+        maxChar: 6
+      x-rapi-security: {}
+      x-rapi-deprecationMessage: ""
+      x-rapi-tags:
+      - issues
+  /assuranceIssues/{id}/impactedClients:
     post:
       tags:
       - issues
@@ -128,6 +143,7 @@ paths:
         | `attributes` | A list of attributes associated with the client, which can be requested to be included in the response alongside the required attributes. |
         | `filters` | This is used to specify one or more conditions for filtering the queried data.|
         | `page` | It includes the **limit, offset, and sortBy** fields. *limit* denotes the number of records to retrieve per page, *offset* signifies the initial data position, and *sortBy* is used to sort the response based on the sortBy fields. It contains the attribute name, order. |
+        For detailed information about the usage of the API, please refer to the Open API specification document - https://github.com/cisco-en-programmability/catalyst-center-api-specs/blob/main/Assurance/CE_Cat_Center_Org-IssuesList-3.4.1-resolved.yaml.
       operationId: queryImpactedClients
       parameters:
       - name: id
@@ -178,12 +194,96 @@ paths:
           $ref: "#/components/responses/5XX"
         default:
           $ref: "#/components/responses/defaultError"
-  /dna/data/api/v1/assuranceIssues:
+      x-rapi-id: 98a9-4b43-4438-8cdd
+      x-rapi-domain: Know Your Network
+      x-rapi-subdomain: Issues
+      x-rapi-hideInCP: false
+      x-rapi-banner: []
+      x-rapi-policies:
+      - type: rate-limiting
+        count: 100
+        duration: MINUTE
+        maxChar: 6
+      x-rapi-security: {}
+      x-rapi-deprecationMessage: ""
+      x-rapi-tags:
+      - issues
+  /assuranceIssues/{id}/impactedMembers:
+    post:
+      tags:
+      - issues
+      summary: Retrieves the list of impacted members for the given grouped issue id by applying complex filters.
+      description: "A grouped issue tracks one problem affecting a set of members under a single issue instance, such as several interfaces on a switch. Each member lists the peers that failed on it, such as access points, wired clients, wireless clients, or switches. An issue ID without stored grouped membership returns 404.\n\nFor an unresolved issue, this API returns currently impacted members. For a resolved issue, it returns members impacted at any point during that issue's lifetime. Each row is identified by the member `id`, independently of its peer. status and `timestamp` describe the member's last accepted fail or clear observation; `peerId` retains the last failing peer when known. If a stored member status is missing, it is inferred from the issue status. \n\n`startTime` and `endTime` select the issue, not its peers: the issue is listed when its first occurrence (`eventTime`) or most recent occurrence (`_mostRecent`) falls inclusively within the range, matching the issue list. Otherwise the response is empty with `count` 0. An issue with neither occurrence time stored is always listed. Once the issue is listed, its peers are returned without any further time filtering, whatever their `lastFailTime`. With neither bound supplied, the range defaults to the last 24 hours; with one bound supplied, the other is set 24 hours away. \n\nActive and ignored issues list the currently impacted members, and for each only the currently failing peers, so every member and peer has status `fail`. Resolved issues list every member that was ever impacted, with all retained peers (`fail` or `clear`), including peers that expired, were replaced, or were evicted. A peer listed in both the current and the retained set appears once. Members with no listed peers are omitted. A peer's `status` is its last observed network state: only an explicit source clear changes it to `clear`, and `lastFailTime` is preserved. Manual resolution and expiry do not imply source recovery. A member is `fail` if any listed peer is `fail`, otherwise `clear`. `failingPeers` counts listed peers with status `fail`. A peer's `peerType` is `UNKNOWN` when the device type could not be determined.\n\n`filters` apply before counting and pagination, with one level of nested `and`/`or` groups supported. `peerType` and `peerId` filters match a member when any of its peers matches; with `neq` or `notIn`, none of its peers may match. `page.sortBy` sorts members before pagination and is returned in the page metadata. When omitted, members are sorted by `id` ascending.\n\n`attributes` projects member fields; `id` is always returned. \n\n`views` controls how peer `details` are filled, independently of `attributes`. Every peer returns `details` with the values stored with the issue: name, uuid, authentication method, AAA server IP, and failure reason. Omitting `views` includes all supported details; `views: [base]` returns only the stored values. With `details`, missing identity, model, controller, and location values are looked up only for the returned page and do not determine which members are returned. Access points and network devices with a stored uuid are matched to device health records by uuid; an access point without one is matched by Ethernet MAC to `peerId`. Wired clients are matched to client health records by `peerId`. The latest record between `startTime` and the later of `endTime` and the latest `lastFailTime` on the page is used. Authentication method, AAA server IP, and failure reason are never read from health data. A field is null when it does not apply to the peer type or no value is known.\n\nRetrieves the list of impacted members for the given grouped issue id\n\n**The input payload contains the following fields,**\n|Field Name | Description |\n| --- | --- |\n| `startTime` | The start time indicates when the API begins retrieving data related to the resource. It must be specified in the UNIX epoch time format, measured in milliseconds. This value is inclusive, and if left unspecified, the default is 1 day before the endTime. |\n| `endTime` | The end time indicates the upper limit until which the API retrieves data related to the resource. It must be defined in the UNIX epoch time format, measured in milliseconds. This value is inclusive, and if left unspecified, the default is the latest available data. |\n| `attributes` | A list of attributes associated with the member, which can be requested to be included in the response alongside the required attributes. |\n| `views` | The name of the View. Each view represents a specific data set. Please refer to the `ImpactedMembersView` Model for supported views. View is predefined set of attributes supported by the API. Only the attributes related to the given view will be part of the API response along with default attributes. |\n| `filters` | This is used to specify one or more conditions for filtering the queried data.|\n| `page` | It includes the **limit, offset, and sortBy** fields. *limit* denotes the number of records to retrieve per page, *offset* signifies the initial data position, and *sortBy* is used to sort the response based on the sortBy fields. It contains the attribute name, order. |\nFor detailed information about the usage of the API, please refer to the Open API specification document - https://github.com/cisco-en-programmability/catalyst-center-api-specs/blob/main/Assurance/CE_Cat_Center_Org-IssuesList-3.4.1-resolved.yaml"
+      operationId: queryImpactedMembers
+      parameters:
+      - name: id
+        in: path
+        description: The grouped issue Uuid
+        required: true
+        schema:
+          type: string
+      - name: X-CALLER-ID
+        in: header
+        description: |
+          Caller ID is used to trace the origin of API calls and their associated queries executed on the database. It's an optional header parameter that can be added to an API request.
+        required: false
+        schema:
+          type: string
+          default: unknown
+        example: ui:client360
+      requestBody:
+        description: Payload to query impacted members with complex filters.
+        content:
+          application/json; charset=utf-8:
+            schema:
+              $ref: "#/components/schemas/ImpactedMembersRequest"
+            examples:
+              Request with filters:
+                $ref: "#/components/examples/ImpactedMembersRequestExample1"
+              Request with filters and views:
+                $ref: "#/components/examples/ImpactedMembersRequestExample2"
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/ImpactedMembersResponseModel"
+        "400":
+          $ref: "#/components/responses/400"
+        "404":
+          $ref: "#/components/responses/404"
+        "500":
+          $ref: "#/components/responses/500"
+        "1XX":
+          $ref: "#/components/responses/1XX"
+        "2XX":
+          $ref: "#/components/responses/2XX"
+        "3XX":
+          $ref: "#/components/responses/3XX"
+        "4XX":
+          $ref: "#/components/responses/4XX"
+        "5XX":
+          $ref: "#/components/responses/5XX"
+        default:
+          $ref: "#/components/responses/defaultError"
+      x-rapi-id: 469a-8821-4efb-a7a4
+      x-rapi-domain: Know Your Network
+      x-rapi-subdomain: Issues
+      x-rapi-hideInCP: false
+      x-rapi-banner: []
+      x-rapi-policies:
+      - type: rate-limiting
+        count: 100
+        duration: MINUTE
+        maxChar: 6
+      x-rapi-security: {}
+      x-rapi-deprecationMessage: ""
+      x-rapi-tags:
+      - issues
+  /assuranceIssues:
     get:
       tags:
       - issues
       summary: Get the details of issues for given set of filters
-      description: "Returns all details of each issue along with suggested actions for given set of filters specified in query parameters. If there is no start and/or end time, then end time will be defaulted to current time and start time will be defaulted to 24-hours ago from end time. All string type query parameters support wildcard search (using *). For example: siteHierarchy=Global/San Jose/* returns issues under all sites whole siteHierarchy starts with \"Global/San Jose/\""
+      description: "Returns all details of each issue along with suggested actions for given set of filters specified in query parameters. If there is no start and/or end time, then end time will be defaulted to current time and start time will be defaulted to 24-hours ago from end time. All string type query parameters support wildcard search (using *). For example: siteHierarchy=Global/San Jose/* returns issues under all sites whole siteHierarchy starts with \"Global/San Jose/\" For detailed information about the usage of the API, please refer to the Open API specification document - https://github.com/cisco-en-programmability/catalyst-center-api-specs/blob/main/Assurance/CE_Cat_Center_Org-IssuesList-3.4.1-resolved.yaml."
       operationId: readIssues
       parameters:
       - name: X-CALLER-ID
@@ -408,6 +508,7 @@ paths:
             - Wireless Controller
             - Routers
             - Switches and Hubs
+            - Wireless Clients
             - Third Party Device
       - name: name
         in: query
@@ -675,12 +776,26 @@ paths:
           $ref: "#/components/responses/5XX"
         default:
           $ref: "#/components/responses/defaultError"
-  /dna/data/api/v1/assuranceIssues/count:
+      x-rapi-id: a2b3-9941-460b-90a2
+      x-rapi-domain: Know Your Network
+      x-rapi-subdomain: Issues
+      x-rapi-hideInCP: false
+      x-rapi-banner: []
+      x-rapi-policies:
+      - type: rate-limiting
+        count: 100
+        duration: MINUTE
+        maxChar: 6
+      x-rapi-security: {}
+      x-rapi-deprecationMessage: ""
+      x-rapi-tags:
+      - issues
+  /assuranceIssues/count:
     get:
       tags:
       - issues
       summary: Get the total number of issues for given set of filters
-      description: "Returns the total number issues for given set of filters. If there is no start and/or end time, then end time will be defaulted to current time and start time will be defaulted to 24-hours ago from end time."
+      description: "Returns the total number issues for given set of filters. If there is no start and/or end time, then end time will be defaulted to current time and start time will be defaulted to 24-hours ago from end time. For detailed information about the usage of the API, please refer to the Open API specification document - https://github.com/cisco-en-programmability/catalyst-center-api-specs/blob/main/Assurance/CE_Cat_Center_Org-IssuesList-3.4.1-resolved.yaml."
       operationId: readIssuesCount
       parameters:
       - name: X-CALLER-ID
@@ -1078,12 +1193,35 @@ paths:
           $ref: "#/components/responses/5XX"
         default:
           $ref: "#/components/responses/defaultError"
-  /dna/data/api/v1/assuranceIssues/query:
+      x-rapi-id: 3b96-7a4b-4369-923b
+      x-rapi-domain: Know Your Network
+      x-rapi-subdomain: Issues
+      x-rapi-hideInCP: false
+      x-rapi-banner: []
+      x-rapi-policies:
+      - type: rate-limiting
+        count: 100
+        duration: MINUTE
+        maxChar: 6
+      x-rapi-security: {}
+      x-rapi-deprecationMessage: ""
+      x-rapi-tags:
+      - issues
+  /assuranceIssues/query:
     post:
       tags:
       - issues
       summary: Get the details of issues for given set of filters
-      description: "Returns all details of each issue along with suggested actions for given set of filters specified in request body. If there is no start and/or end time, then end time will be defaulted to current time and start time will be defaulted to 24-hours ago from end time.\n|Field Name | Description |\n| --- | --- |\n| `startTime` | start time from which API queries the data set related to the resource. It must be specified in UNIX epochtime in milliseconds. Value is inclusive & the default is latest |\n| `endTime` | end time to which API queries the data set related to the resource. It must be specified in UNIX epochtime in milliseconds. Value is inclusive & the default is latest |\n| `filters`| used to define one or more conditions. Only the data that satisfy these conditions will be taken into consideration during the aggregation calculation.|\n| `attributes` | List of attributes related to the issue. If these are provided, then only those attributes will be part of response along with the default attributes. Please refer to the `IssuesResponseAttribute` Model for supported attributes.|\n| `views` | View is predefined set of attributes supported by the API. Only the attributes related to the given view will be part of the API response along with default attributes. If multiple views are provided, then response will contain attributes from all those views. Please refer to the `IssuesView` Model for supported attributes. If no views are specified, all attributes will be returned.  |\n| `page`| contains **limit, offset and sortBy** fields. *limit* - Number of records to be returned in response, *offset* - starting offset of data and *sortBy* - attribute name, order to sort        "
+      description: |-
+        Returns all details of each issue along with suggested actions for given set of filters specified in request body. If there is no start and/or end time, then end time will be defaulted to current time and start time will be defaulted to 24-hours ago from end time.
+        |Field Name | Description |
+        | --- | --- |
+        | `startTime` | start time from which API queries the data set related to the resource. It must be specified in UNIX epochtime in milliseconds. Value is inclusive & the default is latest |
+        | `endTime` | end time to which API queries the data set related to the resource. It must be specified in UNIX epochtime in milliseconds. Value is inclusive & the default is latest |
+        | `filters`| used to define one or more conditions. Only the data that satisfy these conditions will be taken into consideration during the aggregation calculation.|
+        | `attributes` | List of attributes related to the issue. If these are provided, then only those attributes will be part of response along with the default attributes. Please refer to the `IssuesResponseAttribute` Model for supported attributes.|
+        | `views` | View is predefined set of attributes supported by the API. Only the attributes related to the given view will be part of the API response along with default attributes. If multiple views are provided, then response will contain attributes from all those views. Please refer to the `IssuesView` Model for supported attributes. If no views are specified, all attributes will be returned.  |
+        | `page`| contains **limit, offset and sortBy** fields. *limit* - Number of records to be returned in response, *offset* - starting offset of data and *sortBy* - attribute name, order to sort. For detailed information about the usage of the API, please refer to the Open API specification document - https://github.com/cisco-en-programmability/catalyst-center-api-specs/blob/main/Assurance/CE_Cat_Center_Org-IssuesList-3.4.1-resolved.yaml.
       operationId: readIssuesWithFilters
       parameters:
       - name: X-CALLER-ID
@@ -1139,7 +1277,21 @@ paths:
           $ref: "#/components/responses/5XX"
         default:
           $ref: "#/components/responses/defaultError"
-  /dna/data/api/v1/assuranceIssues/query/count:
+      x-rapi-id: ef9c-a8fb-49fa-b84d
+      x-rapi-domain: Know Your Network
+      x-rapi-subdomain: Issues
+      x-rapi-hideInCP: false
+      x-rapi-banner: []
+      x-rapi-policies:
+      - type: rate-limiting
+        count: 100
+        duration: MINUTE
+        maxChar: 6
+      x-rapi-security: {}
+      x-rapi-deprecationMessage: ""
+      x-rapi-tags:
+      - issues
+  /assuranceIssues/query/count:
     post:
       tags:
       - issues
@@ -1154,6 +1306,7 @@ paths:
         | `startTime` | start time from which API queries the data set related to the resource. It must be specified in UNIX epochtime in milliseconds. Value is inclusive & the default is latest |
         | `endTime` | end time to which API queries the data set related to the resource. It must be specified in UNIX epochtime in milliseconds. Value is inclusive & the default is latest |
         | `filters`| used to define one or more conditions. Only the data that satisfy these conditions will be taken into consideration during the aggregation calculation.|
+        For detailed information about the usage of the API, please refer to the Open API specification document - https://github.com/cisco-en-programmability/catalyst-center-api-specs/blob/main/Assurance/CE_Cat_Center_Org-IssuesList-3.4.1-resolved.yaml.
       operationId: readIssuesCountWithFilters
       parameters:
       - name: X-CALLER-ID
@@ -1191,7 +1344,21 @@ paths:
           $ref: "#/components/responses/5XX"
         default:
           $ref: "#/components/responses/defaultError"
-  /dna/data/api/v1/assuranceIssues/topNAnalytics:
+      x-rapi-id: b593-ea95-47b9-aa68
+      x-rapi-domain: Know Your Network
+      x-rapi-subdomain: Issues
+      x-rapi-hideInCP: false
+      x-rapi-banner: []
+      x-rapi-policies:
+      - type: rate-limiting
+        count: 100
+        duration: MINUTE
+        maxChar: 6
+      x-rapi-security: {}
+      x-rapi-deprecationMessage: ""
+      x-rapi-tags:
+      - issues
+  /assuranceIssues/topNAnalytics:
     post:
       tags:
       - issues
@@ -1208,7 +1375,8 @@ paths:
         |`filters`| used to define one or more conditions. Only the data that satisfy these conditions will be taken into consideration during the aggregation calculation.|
         | `attributes` | attributes are used for obtaining one or more field's data in addition to the aggregated data. The supported attributes are listed in ` IssuesAnalyticsAttributeKey` model|
         | `aggregateAttributes` | specifies the names of the attributes on which the aggregate function should be applied when querying the data. The supported attribute names are listed in `IssuesAnalyticsAggregateAttribute` model  |
-        |`page`| contains **limit, offset and sortBy** fields. *limit* - Number of records to be returned in response, *offset* - starting offset of data and *sortBy* - attribute name, order to sort
+        |`page`| contains **limit, offset and sortBy** fields. *limit* - Number of records to be returned in response, *offset* - starting offset of data and *sortBy* - attribute name, order to sort |
+        For detailed information about the usage of the API, please refer to the Open API specification document - https://github.com/cisco-en-programmability/catalyst-center-api-specs/blob/main/Assurance/CE_Cat_Center_Org-IssuesList-3.4.1-resolved.yaml.
       operationId: queryIssuesTopNAnalytics
       parameters:
       - name: X-CALLER-ID
@@ -1262,7 +1430,21 @@ paths:
           $ref: "#/components/responses/5XX"
         default:
           $ref: "#/components/responses/defaultError"
-  /dna/data/api/v1/assuranceIssues/trendAnalytics:
+      x-rapi-id: d0b7-4844-4559-8fa7
+      x-rapi-domain: Know Your Network
+      x-rapi-subdomain: Issues
+      x-rapi-hideInCP: false
+      x-rapi-banner: []
+      x-rapi-policies:
+      - type: rate-limiting
+        count: 25
+        duration: MINUTE
+        maxChar: 6
+      x-rapi-security: {}
+      x-rapi-deprecationMessage: ""
+      x-rapi-tags:
+      - issues
+  /assuranceIssues/trendAnalytics:
     post:
       tags:
       - issues
@@ -1280,6 +1462,7 @@ paths:
         | `attributes` | attributes are used for obtaining one or more field's data in addition to the aggregated data. The supported attributes are listed in ` IssuesAnalyticsAttributeKey` model|
         | `aggregateAttributes` | specifies the name of the attribute on which the aggregate function should be applied when querying the data. The supported attribute names are listed in `IssuesAnalyticsAggregateAttributeKey` model  |
         | `page` | contains **limit, offset, and timestampOrder** fields. *limit* - number of records to be returned in response. *offset* - starting offset of data. *timestampOrder* - to sort the response based on the timestamp either in ascending or descending order. |
+        For detailed information about the usage of the API, please refer to the Open API specification document - https://github.com/cisco-en-programmability/catalyst-center-api-specs/blob/main/Assurance/CE_Cat_Center_Org-IssuesList-3.4.1-resolved.yaml.
       operationId: queryIssuesTrendAnalytics
       parameters:
       - name: X-CALLER-ID
@@ -1333,7 +1516,21 @@ paths:
           $ref: "#/components/responses/5XX"
         default:
           $ref: "#/components/responses/defaultError"
-  /dna/data/api/v1/assuranceIssues/summaryAnalytics:
+      x-rapi-id: 0585-db08-454b-84c7
+      x-rapi-domain: Know Your Network
+      x-rapi-subdomain: Issues
+      x-rapi-hideInCP: false
+      x-rapi-banner: []
+      x-rapi-policies:
+      - type: rate-limiting
+        count: 25
+        duration: MINUTE
+        maxChar: 6
+      x-rapi-security: {}
+      x-rapi-deprecationMessage: ""
+      x-rapi-tags:
+      - issues
+  /assuranceIssues/summaryAnalytics:
     post:
       tags:
       - issues
@@ -1349,7 +1546,8 @@ paths:
         | `filters`| used to define one or more conditions. Only the data that satisfy these conditions will be taken into consideration during the aggregation calculation.|
         | `attributes` | attributes are used for obtaining one or more field's data in addition to the aggregated data. The supported attributes are listed in ` IssuesAnalyticsAttributeKey` model|
         | `aggregateAttributes` | specifies the name of the attribute on which the aggregate function should be applied when querying the data. The supported attribute names are listed in `IssuesAnalyticsAggregateAttributeKey` model  |
-        | `page`| contains **limit, offset and sortBy** fields. *limit* - Number of records to be returned in response, *offset* - starting offset of data and *sortBy* - attribute name, order to sort
+        | `page`| contains **limit, offset and sortBy** fields. *limit* - Number of records to be returned in response, *offset* - starting offset of data and *sortBy* - attribute name, order to sort |
+        For detailed information about the usage of the API, please refer to the Open API specification document - https://github.com/cisco-en-programmability/catalyst-center-api-specs/blob/main/Assurance/CE_Cat_Center_Org-IssuesList-3.4.1-resolved.yaml.
       operationId: queryIssuesSummaryAnalytics
       parameters:
       - name: X-CALLER-ID
@@ -1405,8 +1603,36 @@ paths:
           $ref: "#/components/responses/5XX"
         default:
           $ref: "#/components/responses/defaultError"
+      x-rapi-id: 1c9c-1b42-449b-a8ef
+      x-rapi-domain: Know Your Network
+      x-rapi-subdomain: Issues
+      x-rapi-hideInCP: false
+      x-rapi-banner: []
+      x-rapi-policies:
+      - type: rate-limiting
+        count: 25
+        duration: MINUTE
+        maxChar: 6
+      x-rapi-security: {}
+      x-rapi-deprecationMessage: ""
+      x-rapi-tags:
+      - issues
 components:
   schemas:
+    ImpactedMembersResponseModel:
+      type: object
+      properties:
+        response:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImpactedMember"
+        page:
+          $ref: "#/components/schemas/ImpactedMembersPaginationResponse"
+        version:
+          type: string
+          description: The version of the response
+          example: "1.0"
+      description: Collection of grouped issue members
     ImpactedClientsResponseModel:
       type: object
       properties:
@@ -1661,6 +1887,7 @@ components:
           - Wireless Controller
           - Routers
           - Switches and Hubs
+          - Wireless Clients
           - Third Party Device
         category:
           type: string
@@ -1890,10 +2117,6 @@ components:
     ImpactedClientsRequest:
       type: object
       properties:
-        startTime:
-          $ref: "#/components/schemas/startTime"
-        endTime:
-          $ref: "#/components/schemas/endTime"
         attributes:
           type: array
           items:
@@ -1904,7 +2127,29 @@ components:
             $ref: "#/components/schemas/ImpactedClientsFilter"
         page:
           $ref: "#/components/schemas/ImpactedClientsPaginationRequest"
-      description: Request payload used for impacted clients query API for an issue. This matches the clients query request payload except that aggregateAttributes is not supported.
+      description: Request payload used for impacted members query API for an issue. This matches the clients query request payload except that aggregateAttributes is not supported.
+      allOf:
+      - $ref: "#/components/schemas/startAndEndTime"
+    ImpactedMembersRequest:
+      type: object
+      properties:
+        attributes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImpactedMembersAttribute"
+        views:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImpactedMembersView"
+        filters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImpactedMembersFilter"
+        page:
+          $ref: "#/components/schemas/ImpactedMembersPaginationRequest"
+      description: Request payload used for impacted members query API for a grouped issue.
+      allOf:
+      - $ref: "#/components/schemas/startAndEndTime"
     IssuesQueryCountRequest:
       type: object
       properties:
@@ -2012,7 +2257,7 @@ components:
         key:
           $ref: "#/components/schemas/ImpactedClientsFilterKey"
         operator:
-          $ref: "#/components/schemas/Operator"
+          $ref: "#/components/schemas/IssuesOperator"
         logicalOperator:
           $ref: "#/components/schemas/LogicalOperator"
         value:
@@ -2169,6 +2414,263 @@ components:
       - outdoorName
       - previousApName
       - previousWlcName
+    ImpactedMembersView:
+      type: string
+      description: |
+        Detail view for grouped issue members. `base` returns peer details stored with the issue only;`details` also fills missing peer identity, model, controller, and location details from device or client health data. Authentication method, AAA server IP, and failure reason are always the stored values.
+      enum:
+      - base
+      - details
+    ImpactedMembersFilter:
+      type: object
+      properties:
+        key:
+          $ref: "#/components/schemas/ImpactedMembersFilterKey"
+        operator:
+          $ref: "#/components/schemas/IssuesOperator"
+        logicalOperator:
+          $ref: "#/components/schemas/LogicalOperator"
+        value:
+          type: object
+          description: "Field value(s) to filter the data set. Array of values is used for   \"in\" or \"out\" operator. Values will be of whatever type the   specific field being filtered is defined with.\n\nFor other operators, filter value is of whatever type the specific   field being filtered is defined with.\n\nIn the case of an \"and\" or \"or\" operator, this values array will be   ignored, and the values arrays in each of the *nested filters* will be used.\nThe data type of a value, or each item inside the value in case it is a list, must match the type defined in the Impacted Members response model \n"
+        filters:
+          type: array
+          description: |
+            Nested array of filters in case of AND/OR based filters. Only one   level of nesting will be supported.
+
+            Structure of nested filter is the same as parent with all operators   supported except AND or OR.
+          items:
+            $ref: "#/components/schemas/ImpactedMembersFilter"
+      description: |
+        For a single filter, use `key`, `operator`, and `value`. For nested filters, use `logicalOperator` and `filters`. Only one nesting level is supported.
+    ImpactedMembersFilterKey:
+      type: string
+      description: Base member fields supported as filter keys.
+      enum:
+      - id
+      - type
+      - status
+      - peerType
+      - peerId
+    ImpactedMembersAttribute:
+      type: string
+      description: Base member fields that can be requested in the response.
+      enum:
+      - id
+      - type
+      - status
+      - failingPeers
+      - peerId
+    ImpactedMembersPaginationRequest:
+      type: object
+      properties:
+        limit:
+          maximum: 500
+          minimum: 1
+          type: integer
+          description: Maximum number of member rows in the response.
+          example: 100
+          default: 100
+        offset:
+          minimum: 1
+          type: integer
+          description: One-based starting row offset.
+          example: 1
+          default: 1
+        sortBy:
+          type: array
+          description: Sort fields applied before pagination. Defaults to member id ascending.
+          items:
+            $ref: "#/components/schemas/ImpactedMembersSortBy"
+    ImpactedMembersPaginationResponse:
+      type: object
+      properties:
+        count:
+          type: integer
+          description: Total number of matching members before pagination
+          example: 100
+        limit:
+          maximum: 500
+          minimum: 1
+          type: integer
+          description: Maximum number of member rows in the response
+          example: 100
+        offset:
+          minimum: 1
+          type: integer
+          description: One-based starting row offset
+          example: 1
+        sortBy:
+          type: array
+          description: Sort fields applied to the response rows.
+          items:
+            $ref: "#/components/schemas/ImpactedMembersSortBy"
+    ImpactedMembersSortBy:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Base member field to sort by.
+          enum:
+          - id
+          - type
+          - status
+          - failingPeers
+        order:
+          type: string
+          description: "Sort order, ascending or descending."
+          example: asc
+          enum:
+          - asc
+          - desc
+      description: Member rows are sorted by these base member fields before pagination.
+    ImpactedMember:
+      required:
+      - id
+      type: object
+      properties:
+        id:
+          type: string
+          description: Member ID as stored by the grouped issue
+          example: GigabitEthernet1/0/2
+        type:
+          type: string
+          description: "Grouped issue member type, independent of peer type"
+          nullable: true
+          example: interface
+        status:
+          type: string
+          description: "fail when any listed peer has a last observed fail status, otherwise clear. Always fail for active and ignored issues."
+          enum:
+          - fail
+          - clear
+        failingPeers:
+          type: integer
+          description: |
+            Number of listed peers whose last observed status is fail. For a resolved issue this does not imply the issue is active; manual resolution and expiry do not change the last observed network status.
+          example: 1
+        peers:
+          type: array
+          description: |
+            Peers on this member, not filtered by the request time range. Active and ignored issues list only the currently failing peers; resolved issues list all retained fail and clear peers, including expired,
+            replaced, and evicted ones. Each peer appears once with its latest failure point.
+          items:
+            $ref: "#/components/schemas/ImpactedMemberPeer"
+    ImpactedMemberPeer:
+      required:
+      - peerId
+      type: object
+      properties:
+        peerId:
+          type: string
+          description: "Peer identifier as recorded by the issue, normally a MAC address as 12 lowercase hex digits"
+          example: 0c75bdb3e384
+        peerType:
+          type: string
+          description: Peer category reported with the failure; UNKNOWN when the device type could not be determined
+          example: ACCESS_POINT
+          enum:
+          - ACCESS_POINT
+          - WIRED_CLIENT
+          - SWITCH
+          - ROUTER
+          - NETWORK_DEVICE
+          - UNKNOWN
+        status:
+          type: string
+          description: Last observed network status. Only an explicit source clear changes fail to clear; issue expiry and manual resolution do not imply source recovery.
+          enum:
+          - fail
+          - clear
+        lastFailTime:
+          type: integer
+          description: "Latest failure observation for this peer on this member, in milliseconds since the Unix epoch. May fall outside the request time range. Preserved when the peer clears."
+          format: int64
+          example: 1759924150000
+        details:
+          description: "AP health details for an ACCESS_POINT peer, found by matching peerId to the AP Ethernet MAC; null when not requested or no AP health record is found"
+          allOf:
+          - $ref: "#/components/schemas/ImpactedMemberDetails"
+      description: A peer that failed on a grouped issue member.
+    ImpactedMemberDetails:
+      type: object
+      properties:
+        name:
+          type: string
+          description: "Peer name stored with the failure, else the device name or the client host name or user name"
+          nullable: true
+          example: AP0C75.BDB3.E384
+        uuid:
+          type: string
+          description: Inventory UUID of an access point or network device peer; null for wired clients
+          nullable: true
+          example: 3e1f9c2a-5b7d-4c8e-9f10-2a3b4c5d6e7f
+        macAddress:
+          type: string
+          description: "Device base MAC address of an access point or network device, or the MAC address of a wired client"
+          nullable: true
+          example: 24:6f:28:aa:bb:cc
+        ethernetMac:
+          type: string
+          description: Ethernet MAC address of an access point peer; null for other peer types
+          nullable: true
+          example: 0c:75:bd:b3:e3:84
+        ipAddress:
+          type: string
+          description: "Management IP address of a device peer, or the IPv4 (else IPv6) address of a wired client"
+          nullable: true
+          example: 10.10.20.5
+        model:
+          type: string
+          description: Model of an access point or platform ID of a network device; null for wired clients
+          nullable: true
+          example: C9130AXI-B
+        wlcName:
+          type: string
+          description: Name of the WLC an access point peer joined; null for other peer types
+          nullable: true
+          example: WLC-9800-1
+        wlcUuid:
+          type: string
+          description: Inventory UUID of the WLC an access point peer joined; null for other peer types
+          nullable: true
+        siteHierarchy:
+          type: string
+          description: Site hierarchy name of the peer
+          nullable: true
+          example: Global/San Jose/Building 1/Floor 1
+        siteHierarchyId:
+          type: string
+          description: Site hierarchy ID of the peer
+          nullable: true
+        authMethod:
+          type: string
+          description: |
+            Uplink authentication method stored with the peer's latest failure; UNKNOWN when the stored value is not recognized, null when not reported
+          nullable: true
+          example: 802.1X
+          enum:
+          - UNKNOWN
+          - 802.1X
+          - MAB
+        aaaServerIp:
+          type: string
+          description: AAA server IP stored with the peer's latest failure; null when not reported
+          nullable: true
+          example: 172.20.56.57
+        authFailureReason:
+          type: string
+          description: Authentication or authorization reason code stored with the peer's latest failure; null for MACsec failures or when not reported
+          nullable: true
+          example: AUTHC_TIMEOUT_FAIL
+        authFailureReasonDescription:
+          type: string
+          description: Human-readable description of authFailureReason; null when authFailureReason is null or not a recognized failure code
+          nullable: true
+          example: Timeout failure
+      description: |
+        Details that identify the peer. Values stored with the issue are always returned. With the `details` view, missing identity, model, controller, and location values are filled from the latest device health record (access points and network devices) or client health record (wired clients) between the request start time and the later of the request end time and the latest lastFailTime on the page. A field is null when it does not apply to the peer type or is not known.
+      nullable: true
     IssuesAnalyticsAttributeKey:
       type: string
       enum:
@@ -2656,29 +3158,6 @@ components:
           description: The total number of records related to the resource
           format: int64
           example: 1000
-    startTime:
-      type: integer
-      description: Start time from which the API queries the dataset related to the resource. It must be specified in terms of milliseconds since UNIX epoch. Value is inclusive.
-      format: int64
-      example: 1705348800000
-    endTime:
-      type: integer
-      description: End time to which the API queries the dataset related to the resource. It must be specified in terms of milliseconds since UNIX epoch. Value is inclusive.
-      format: int64
-      example: 1705435200000
-    Operator:
-      type: string
-      description: Type of filter operator to use for querying data | in and out operator takes multiple values and applies the filters
-      enum:
-      - in
-      - neq
-      - lt
-      - gt
-      - lte
-      - gte
-      - eq
-      - notIn
-      - like
   responses:
     ImpactedClientsResponseModel:
       description: Response containing details of impacted clients for the given issue
@@ -2691,6 +3170,17 @@ components:
               $ref: "#/components/examples/ImpactedClientsResponseExample1"
             Response with requested fields:
               $ref: "#/components/examples/ImpactedClientsResponseExample2"
+    ImpactedMembersResponseModel:
+      description: Response containing details of impacted members for the given grouped issue
+      content:
+        application/json; charset=utf-8:
+          schema:
+            $ref: "#/components/schemas/ImpactedMembersResponseModel"
+          examples:
+            Response with all fields:
+              $ref: "#/components/examples/ImpactedMembersResponseExample1"
+            Response with base fields:
+              $ref: "#/components/examples/ImpactedMembersResponseExample2"
     IssueDetailResponseModel:
       description: Response containing issue details of a given issue
       content:
@@ -2948,6 +3438,7 @@ components:
           - Wireless Controller
           - Routers
           - Switches and Hubs
+          - Wireless Clients
           - Third Party Device
     issueSeverity:
       name: severity
@@ -3412,6 +3903,92 @@ components:
           - name: macAddress
             order: asc
         version: "1.0"
+    ImpactedMembersRequestExample1:
+      description: This request with filters
+      value:
+        startTime: 1783440000000
+        endTime: 1784044800000
+        filters:
+        - key: status
+          value: fail
+          operator: eq
+        page:
+          limit: 10
+          offset: 1
+          sortBy:
+          - name: id
+            order: asc
+    ImpactedMembersRequestExample2:
+      description: This request with filters and view
+      value:
+        startTime: 1783440000000
+        endTime: 1784044800000
+        filters:
+        - key: id
+          value:
+          - GigabitEthernet1/0/2
+          operator: in
+        views:
+        - details
+        page:
+          limit: 10
+          offset: 1
+          sortBy:
+          - name: timestamp
+            order: desc
+    ImpactedMembersResponseExample1:
+      description: This response has only selected fields. This includes details view as well
+      value:
+        version: "1.0"
+        response:
+        - id: GigabitEthernet1/0/2
+          type: interface
+          status: fail
+          failingPeers: 1
+          peers:
+          - peerId: 0C:75:BD:B3:E3:84
+            peerType: ACCESS_POINT
+            name: AP1
+            status: fail
+            lastFailTime: 1759924150000
+            details:
+              name: AP1
+              uuid: uuid1
+              macAddress: 0C:75:BD:B3:E3:80
+              ethernetMac: 0C:75:BD:B3:E3:84
+              ipAddress: 10.10.20.5
+              model: C9130AXI-B
+              wlcName: WLC-9800-1
+              wlcUuid: wlc-uuid
+              siteHierarchy: Global/San Jose/Building 1/Floor 1
+              siteHierarchyId: /e6931730-8276-4726-8b24-c2185b6ae3ae/2b2cb4bf-90dd-4db0-9624-1ef496ad27a5/b4d6b2da-c41b-4b4a-ad1e-135df70f0786/c20b2fb7-d9e5-4f41-aba5-49855e9b5a81/
+              authMethod: 802.1X
+              aaaServerIp: 1.2.3.4
+              authFailureReason: AUTHC_TIMEOUT_FAIL
+              authFailureReasonDescription: Timeout failure
+        page:
+          count: 1
+          limit: 100
+          offset: 1
+    ImpactedMembersResponseExample2:
+      description: This response has only selected fields.
+      value:
+        version: "1.0"
+        response:
+        - id: GigabitEthernet1/0/2
+          type: interface
+          status: fail
+          failingPeers: 1
+          peers:
+          - peerId: 0C:75:BD:B3:E3:84
+            peerType: ACCESS_POINT
+            name: AP1
+            status: fail
+            lastFailTime: 1790638167158
+        page:
+          count: 1
+          limit: 100
+          offset: 1
     IssuesQueryResponseExample1:
       description: This response has all possible fields. This is default behavior when specific `views` or `attributes` are not requested
       value:
